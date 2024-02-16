@@ -299,4 +299,66 @@ EOF
 
 ```
 
+## Create Generic Resources: 
+
+The common resource being used by both clusters is the (disconnected) registry that is hosted locally on this bastion. Both `siteconfig` files refer to this resource by using `clusterImageSetNameRef: "active-ocp-version"`.  So this needs to be defined now: 
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/resources/active-ocp-version.yaml
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: active-ocp-version
+spec:
+  releaseImage: infra.5g-deployment.lab:8443/openshift/release-images:4.14.0-x86_64
+EOF
+```
+Create kustomization to point to this file: 
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/resources/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - active-ocp-version.yaml
+EOF
+```
+
+### Other Kustomizations: 
+
+A top level kustomization should poin to both `resources` and `pre-req`
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - pre-reqs/
+  - resources/
+generators:
+  - hub-1/5glab.yaml
+EOF
+```
+and a kustomization to point the hub-1 locaation:
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - 5glab.yaml
+EOF
+```
+
+### Update GIT: 
+```
+cd ~/5g-deployment-lab/ztp-repository
+git add --all
+git commit -m 'Added SNO2 and 5GLab Site information'
+git push origin main
+cd ~
+```
+
 
