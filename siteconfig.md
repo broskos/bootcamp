@@ -1,3 +1,7 @@
+# Todo: 
+- extramanifest for sno3 (possibly an MCP?) 
+-
+ 
 ```
 mkdir -p ~/5g-deployment-lab/
 git clone http://student:student@infra.5g-deployment.lab:3000/student/ztp-repository.git ~/5g-deployment-lab/ztp-repository/
@@ -218,9 +222,7 @@ spec:
 EOF
 ```
 
-### Create Site-Config for SNO3:
-
-# add MCP for SNO3
+### Create Site-Config for SNO3: 
 
 ```
 cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/sno3.yaml
