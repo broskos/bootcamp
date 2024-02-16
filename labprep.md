@@ -1,5 +1,6 @@
 ```
 sudo -i 
+dnf install -y tree jq
 # kcli list vm
 cp /opt/dnsmasq/include.d/sno2.ipv4 /opt/dnsmasq/include.d/sno3.ipv4
 vi /opt/dnsmasq/include.d/sno3.ipv4
