@@ -220,6 +220,8 @@ EOF
 
 ### Create Site-Config for SNO3:
 
+# add MCP for SNO3
+
 ```
 cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/sno3.yaml
 ---
@@ -243,8 +245,13 @@ spec:
     # The sdn plugin that will be used
     networkType: "OVNKubernetes"
     # All Composable capabilities removed except required for telco
-    installConfigOverrides:  "{\"capabilities\":{\"baselineCapabilitySet\": \"None\", \"additionalEnabledCapabilities\": [ \"marketplace\", \"NodeTuning\" ] }}"
+    installConfigOverrides:  "{\"capabilities\":{\"baselineCapabilitySet\": \"None\", \"additionalEnabledCapabilities\": [ \"marketplace\", \"NodeTuning\" ] }}
     extraManifestPath: hub-1/sno3-extra-manifest
+    extraManifests:
+      filter:
+        inclusionDefault: exclude
+        include:
+          - mcp-profile1.yaml
     # Cluster labels (this will be used by RHACM)
     clusterLabels:
       common: "ocp414"
