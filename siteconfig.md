@@ -31,10 +31,19 @@ There are two pre-requisites to site config:
 ### Defining BMC Secret for SNO2 & SNO3: 
 
 The username and password for both BMC is `admin` , `admin`. Lets find out what it would be with base64 encoded : 
-```
-echo -n admin | base64
-YWRtaW4=
-```
+
+> echo -n admin | base64
+> YWRtaW4=
+
+>[NOTE!]
+> ```
+> echo -n admin | base64
+> YWRtaW4=
+> ```
+
+>[NOTE!]
+> echo -n admin | base64
+> YWRtaW4=
 
 Now define the secret in the `pre-req` directory: 
 ```
