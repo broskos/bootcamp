@@ -35,13 +35,8 @@ The username and password for both BMC is `admin` , `admin`. Lets find out what 
 > echo -n admin | base64
 > YWRtaW4=
 
->[NOTE!]
-> ```
-> echo -n admin | base64
-> YWRtaW4=
-> ```
 
->[NOTE!]
+>[!NOTE]
 > echo -n admin | base64
 > YWRtaW4=
 
