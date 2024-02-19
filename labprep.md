@@ -3,7 +3,8 @@ sudo -i
 dnf install -y tree jq
 # kcli list vm
 cp /opt/dnsmasq/include.d/sno2.ipv4 /opt/dnsmasq/include.d/sno3.ipv4
-vi /opt/dnsmasq/include.d/sno3.ipv4
+sed -i s/sno2/sno3/g /opt/dnsmasq/include.d/sno3.ipv4
+sed -i s/40/41/g /opt/dnsmasq/include.d/sno3.ipv4
 kcli create vm -P start=False -P uefi_legacy=true -P plan=hub -P memory=24000 -P numcpus=12 -P disks=[200,200] -P nets=['{"name": "5gdeploymentlab", "mac": "aa:aa:aa:aa:04:01"}'] -P uuid=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0401 -P name=sno3
 ## kcli list vm
 ## +----------------+--------+----------------+----------------------------------------------------+------+---------+
