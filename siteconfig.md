@@ -13,9 +13,9 @@ git config --global user.name "Your Name"
 
 ```
 cd ~/5g-deployment-lab/ztp-repository/
-mkdir -p site-configs/{hub-1,resources,pre-reqs/sno2,pre-req/sno3,hub-1/sno2-extra-manifest,hub-1/sno3-extra-manifest}
+mkdir -p site-configs/{hub-1,resources,pre-reqs/sno2,pre-reqs/sno3,hub-1/sno2-extra-manifest,hub-1/sno3-extra-manifest}
 mkdir -p site-policies/{fleet/active,fleet/testing,sites/hub-1}
-touch site-configs/{hub-1,resources,pre-reqs/sno2,pre-req/sno3}/.gitkeep
+touch site-configs/{hub-1,resources,pre-reqs/sno2,pre-reqs/sno3}/.gitkeep
 touch site-policies/{fleet/active,fleet/testing,sites/hub-1}/.gitkeep
 git add --all
 git commit -m 'Initialized repo structure'
@@ -230,8 +230,8 @@ cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/sno3.yaml
 apiVersion: ran.openshift.io/v1
 kind: SiteConfig
 metadata:
-  name: "5glab"
-  namespace: "5glab"
+  name: "sno3"
+  namespace: "sno3"
 spec:
   # The base domain used by our SNOs
   baseDomain: "5g-deployment.lab"
