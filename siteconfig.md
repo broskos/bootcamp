@@ -32,12 +32,7 @@ There are two pre-requisites to site config:
 
 The username and password for both BMC is `admin` , `admin`. Lets find out what it would be with base64 encoded : 
 
-> echo -n admin | base64
-> YWRtaW4=
-
-
->[!NOTE]
-> echo -n admin | base64
+> echo -n admin | base64 <br>
 > YWRtaW4=
 
 Now define the secret in the `pre-req` directory: 
@@ -72,10 +67,10 @@ EOF
 
 ### Defining Pull Secret: 
 The pull secret for locally (preconfigured) registry is `admin`, `r3dh4t1!`, so its base64 encoding will be as follows: 
-```
-echo -n admin:r3dh4t1! | base64
-YWRtaW46cjNkaDR0MSE=
-```
+
+> echo -n admin:r3dh4t1! | base64 <br>
+> YWRtaW46cjNkaDR0MSE=
+
 This secret can now be configured. Note that this is being configured per namespace, hence seperate manifests for both clusters:  
 
 ```
