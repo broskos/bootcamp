@@ -1,6 +1,9 @@
 ```
 sudo -i 
 dnf install -y tree jq
+oc completion bash > oc_bash_completion
+source oc_bash_completion 
+mv oc_bash_completion /etc/bash_completion.d/
 # kcli list vm
 cp /opt/dnsmasq/include.d/sno2.ipv4 /opt/dnsmasq/include.d/sno3.ipv4
 sed -i s/sno2/sno3/g /opt/dnsmasq/include.d/sno3.ipv4
