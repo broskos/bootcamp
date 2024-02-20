@@ -1,3 +1,4 @@
+### Install the ZTP Plugin Locally:
 ```
 sudo -i
 mkdir -p ~/ztp/plugin/
@@ -7,16 +8,10 @@ podman cp $(podman create --name policgentool --rm registry.redhat.io/openshift4
 podman rm -f policgentool
 ```
 
+### Create SiteConfig:
+
 ```
-mkdir -p ~/ztp/5glab/extra-manifest
-```
-```
-cat << EOF > ~/ztp/5glab/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ./
-EOF
+mkdir -p ~/ztp/5glab
 ```
 
 ```
@@ -43,7 +38,12 @@ spec:
     networkType: "OVNKubernetes"
     # All Composable capabilities removed except required for telco
     installConfigOverrides:  "{\"capabilities\":{\"baselineCapabilitySet\": \"None\", \"additionalEnabledCapabilities\": [ \"marketplace\", \"NodeTuning\" ] }}"
-    extraManifestPath: /extra-manifest
+    extraManifestPath: ./extramanifests
+####    extraManifests:
+####      filter:
+####        inclusionDefault: exclude
+####        include:
+####          - CS.yaml
     # Cluster labels (this will be used by RHACM)
     clusterLabels:
       common: "ocp414"
@@ -96,8 +96,36 @@ spec:
                   enabled: false
 EOF
 ```
+
+Create Kustomization File, pointing to siteconfig.yaml :
+
 ```
-cat <<EOF > ~/ztp/5glab/extra-manifest/enable-crun-master.yaml
+cat << EOF > ~/ztp/5glab/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - ./siteconfig.yaml
+EOF
+```
+
+### Create Extra Manifests: 
+```
+mkdir -p ~/ztp/5glab/extramanifest
+```
+```
+cat <<EOF > ~/ztp/5glab/extramanifest/CS.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: redhat-operator-index-disconnect
+  namespace: openshift-marketplace
+spec:
+  image: quay.apps.mano-npss.jnpr.bos2.lab/olmidx/olmidx-redhat-operator-index:v4.10
+  sourceType: grpc
+EOF
+``` 
+```
+cat <<EOF > ~/ztp/5glab/extramanifest/enable-crun-master.yaml
 ---
 apiVersion: machineconfiguration.openshift.io/v1
 kind: ContainerRuntimeConfig
@@ -111,24 +139,26 @@ spec:
    defaultRuntime: crun
 EOF
 ```
-```
-cat <<EOF > ~/ztp/5glab/extra-manifest/enable-crun-worker.yaml
----
-apiVersion: machineconfiguration.openshift.io/v1
-kind: ContainerRuntimeConfig
-metadata:
- name: enable-crun-worker
-spec:
- machineConfigPoolSelector:
-   matchLabels:
-     pools.operator.machineconfiguration.openshift.io/worker: ""
- containerRuntimeConfig:
-   defaultRuntime: crun
-EOF
-```
 
+### Generate manifests 
+
+#### Install Kustomize binary and set plugin path:
 ```
 export KUSTOMIZE_PLUGIN_HOME=/root/ztp/plugin
 curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
 mv kustomize /usr/bin/
+cd ~/ztp/5glab/
 ```
+
+#### ... with the default and additional Extra-Manifests:
+```
+kustomize build ./ --enable-alpha-plugins > out_with_all_extramanifests.yaml
+```
+#### ... with only selective additional Extra-Manifests:
+```
+sed -i s/####//g siteconfig.yaml
+kustomize build ./ --enable-alpha-plugins > out_with_selective_extramanifests.yaml
+```
+
+
+
