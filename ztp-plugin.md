@@ -110,7 +110,7 @@ EOF
 
 ### Create Extra Manifests: 
 ```
-mkdir -p ~/ztp/5glab/extramanifest
+mkdir -p ~/ztp/5glab/extramanifests
 ```
 ```
 cat <<EOF > ~/ztp/5glab/extramanifest/CS.yaml
@@ -154,11 +154,63 @@ cd ~/ztp/5glab/
 ```
 kustomize build ./ --enable-alpha-plugins > out_with_all_extramanifests.yaml
 ```
+
+Check out the generated manifests: 
+```
+grep kind\: out_with_all_extramanifests.yaml 
+```
+Output will look like: 
+> kind: Namespace<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: MachineConfig<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: CatalogSource<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: Node<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: ContainerRuntimeConfig<br>
+> kind: ConfigMap<br>
+> kind: InfraEnv<br>
+> kind: NMStateConfig<br>
+> kind: KlusterletAddonConfig<br>
+> kind: ManagedCluster<br>
+> kind: AgentClusterInstall<br>
+> kind: ClusterDeployment<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: AgentClusterInstall<br>
+> kind: BareMetalHost<br>
+
+
 #### ... with only selective additional Extra-Manifests:
 ```
 sed -i s/####//g siteconfig.yaml
 kustomize build ./ --enable-alpha-plugins > out_with_selective_extramanifests.yaml
 ```
-
+Check out the generated manifests: 
+```
+grep kind\: out_with_selective_extramanifests.yaml 
+```
+Output will look like: 
+> kind: Namespace<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: CatalogSource<br>
+> kind: ConfigMap<br>
+> kind: InfraEnv<br>
+> kind: NMStateConfig<br>
+> kind: KlusterletAddonConfig<br>
+> kind: ManagedCluster<br>
+> kind: AgentClusterInstall<br>
+> kind: ClusterDeployment<br>
+>     kind: AgentClusterInstall<br>
+> kind: BareMetalHost<br>
 
 
