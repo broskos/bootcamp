@@ -173,7 +173,7 @@ spec:
   - clusterName: "sno2"
     # The sdn plugin that will be used
     networkType: "OVNKubernetes"
-    extraManifestPath: sno2-extra-manifest
+    # extraManifestPath: sno2-extra-manifest
     # Cluster labels (this will be used by RHACM)
     clusterLabels:
       common: "ocp414"
