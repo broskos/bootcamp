@@ -1,7 +1,14 @@
 # Todo: 
 - extramanifest for sno3 (possibly an MCP?) 
 -
- 
+```
+pre-reqs --> secrets
+site-configs --> clusters
+clusters/resources --> policies/manifests
+site-policies --> policies 
+hub-1 --> site-group-1
+```
+
 ```
 mkdir -p ~/5g-deployment-lab/
 git clone http://student:student@infra.5g-deployment.lab:3000/student/ztp-repository.git ~/5g-deployment-lab/ztp-repository/
@@ -13,10 +20,10 @@ git config --global user.name "Your Name"
 
 ```
 cd ~/5g-deployment-lab/ztp-repository/
-mkdir -p site-configs/{hub-1,resources,pre-reqs/sno2,pre-reqs/sno3,hub-1/sno2-extra-manifest,hub-1/sno3-extra-manifest}
-mkdir -p site-policies/{fleet/active,fleet/testing,sites/hub-1}
-touch site-configs/{hub-1,resources,pre-reqs/sno2,pre-reqs/sno3}/.gitkeep
-touch site-policies/{fleet/active,fleet/testing,sites/hub-1}/.gitkeep
+mkdir -p clusters/{site-group-1,site-group-1/secrets/sno2,site-group-1/secrets/sno3,site-group-1/sno2-extra-manifest,site-group-1/sno3-extra-manifest}
+mkdir -p policies/{site-specific-policies,resources,configuration-version-2024-03-04,configuration-version-2024-03-04/source-crs,configuration-version-2024-03-04/manifests}
+touch clusters/{site-group-1,site-group-1/secrets/sno2,site-group-1/secrets/sno3}/.gitkeep
+touch policies/{site-specific-policies,resources,configuration-version-2024-03-04,configuration-version-2024-03-04/source-crs,configuration-version-2024-03-04/manifests}/.gitkeep
 git add --all
 git commit -m 'Initialized repo structure'
 git push origin main
@@ -35,9 +42,9 @@ The username and password for both BMC is `admin` , `admin`. Lets find out what 
 > echo -n admin | base64 <br>
 > YWRtaW4=
 
-Now define the secret in the `pre-req` directory: 
+Now define the secret in the `secrets` directory: 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno2/bmc-credentials.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno2/bmc-credentials.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -52,7 +59,7 @@ EOF
 ```
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno3/bmc-credentials.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno3/bmc-credentials.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -74,7 +81,7 @@ The pull secret for locally (preconfigured) registry is `admin`, `r3dh4t1!`, so 
 This secret can now be configured. Note that this is being configured per namespace, hence seperate manifests for both clusters:  
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno2/pull-secret.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno2/pull-secret.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -87,7 +94,7 @@ stringData:
 EOF
 ```
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno3/pull-secret.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno3/pull-secret.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -102,10 +109,10 @@ EOF
 
 ### Point to both secrets as resources: 
 
-The `pre-req` directory contains all the pre-reqs for the varlous clusters. The `kustomization` file here points to the sub-directories where pre-reqs for required clusters are being stored. 
+The `site-group-1/secrets` directory contains all the secrets for the varlous clusters. The `kustomization` file here points to the sub-directories where secrets for required clusters are being stored. 
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/kustomization.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/kustomization.yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -115,10 +122,10 @@ resources:
 EOF
 ```
 
-Within `pre-reqs/sno2`, the kustomization file should point to both of these manifests, identifying these are resources: 
+Within `site-group-1/secrets/sno2`, the kustomization file should point to both of these manifests, identifying these are resources: 
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno2/kustomization.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno2/kustomization.yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -128,9 +135,9 @@ resources:
 EOF
 ```
 
-Similiarly, within `pre-reqs/sno3` the kustomization file should point to both these resources: 
+Similiarly, within `site-group-1/secrets/sno3` the kustomization file should point to both these resources: 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/pre-reqs/sno3/kustomization.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/secrets/sno3/kustomization.yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -144,7 +151,7 @@ EOF
 
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/5glab.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/5glab.yaml
 ---
 apiVersion: ran.openshift.io/v1
 kind: SiteConfig
@@ -165,9 +172,7 @@ spec:
   - clusterName: "sno2"
     # The sdn plugin that will be used
     networkType: "OVNKubernetes"
-    # All Composable capabilities removed except required for telco
-    installConfigOverrides:  "{\"capabilities\":{\"baselineCapabilitySet\": \"None\", \"additionalEnabledCapabilities\": [ \"marketplace\", \"NodeTuning\" ] }}"
-    extraManifestPath: hub-1/sno2-extra-manifest
+    extraManifestPath: sno2-extra-manifest
     # Cluster labels (this will be used by RHACM)
     clusterLabels:
       common: "ocp414"
@@ -185,10 +190,10 @@ spec:
     # Services SDN network range
     serviceNetwork:
       - "172.30.0.0/16"
-    cpuPartitioningMode: AllNodes
+    # cpuPartitioningMode: AllNodes
     additionalNTPSources:
       - infra.5g-deployment.lab
-    holdInstallation: false
+    # holdInstallation: false
     nodes:
       - hostName: "sno2.5g-deployment.lab"
         role: "master"
@@ -220,11 +225,36 @@ spec:
                   enabled: false
 EOF
 ```
+and a kustomization to point the site-group-1 locaation:
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - 5glab.yaml
+resources:
+  - secrets/
+EOF
+```
+
+A top level kustomization should point to the `siteconfig`
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - site-group-1/5glab.yaml
+EOF
+```
+![image3](images/lab_build_3.png)
 
 ### Create Site-Config for SNO3: 
 
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/sno3.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/sno3.yaml
 ---
 apiVersion: ran.openshift.io/v1
 kind: SiteConfig
@@ -247,7 +277,7 @@ spec:
     networkType: "OVNKubernetes"
     # All Composable capabilities removed except required for telco
     installConfigOverrides:  "{\"capabilities\":{\"baselineCapabilitySet\": \"None\", \"additionalEnabledCapabilities\": [ \"marketplace\", \"NodeTuning\" ] }}
-    extraManifestPath: hub-1/sno3-extra-manifest
+    extraManifestPath: site-group-1/sno3-extra-manifest
     extraManifests:
       filter:
         inclusionDefault: exclude
@@ -305,59 +335,6 @@ spec:
                   enabled: false
 EOF
 
-```
-
-## Create Generic Resources: 
-
-The common resource being used by both clusters is the (disconnected) registry that is hosted locally on this bastion. Both `siteconfig` files refer to this resource by using `clusterImageSetNameRef: "active-ocp-version"`.  So this needs to be defined now: 
-
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/resources/active-ocp-version.yaml
----
-apiVersion: hive.openshift.io/v1
-kind: ClusterImageSet
-metadata:
-  name: active-ocp-version
-spec:
-  releaseImage: infra.5g-deployment.lab:8443/openshift/release-images:4.14.0-x86_64
-EOF
-```
-Create kustomization to point to this file: 
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/resources/kustomization.yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - active-ocp-version.yaml
-EOF
-```
-
-### Other Kustomizations: 
-
-A top level kustomization should poin to both `resources` and `pre-req`
-
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/kustomization.yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - pre-reqs/
-  - resources/
-generators:
-  - hub-1/5glab.yaml
-EOF
-```
-and a kustomization to point the hub-1 locaation:
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-configs/hub-1/kustomization.yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-generators:
-  - 5glab.yaml
-EOF
 ```
 
 ### Update GIT: 
