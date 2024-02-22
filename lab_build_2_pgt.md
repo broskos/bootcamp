@@ -1,3 +1,20 @@
+# ToDo: (when reach app section)
+```
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: policy-app-project
+  namespace: openshift-gitops
+spec:
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: hive.openshift.io
+    kind: ClusterImageSet
+  destinations:
+
+```
+
 ## Configuring Policies:
 
 ### Common Policy:
