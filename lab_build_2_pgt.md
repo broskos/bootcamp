@@ -158,6 +158,23 @@ EOF
 
 ![image4](images/lab_build_4.png)
 
+### Top level kustomization : 
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+- resources
+- site-specific-policies
+#- configuration-version-2023-09-10_802e68c
+#- configuration-version-2023-11-01_39ba72d
+- configuration-version-2024-03-04
+EOF
+```
+
+
+
 ### Commit to GIT: 
 
 ```
