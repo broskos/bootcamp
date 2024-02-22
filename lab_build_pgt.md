@@ -1,0 +1,224 @@
+## Configuring Policies:
+
+### Common Policy:
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/common-414.yaml
+---
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "common"
+  namespace: "ztp-policies"
+spec:
+  bindingRules:
+    common: "ocp414"
+    logicalGroup: "active"
+  mcp: master
+  remediationAction: inform
+  sourceFiles:
+    - fileName: OperatorHub.yaml
+      policyName: config-policies
+    - fileName: DefaultCatsrc.yaml
+      metadata:
+        name: redhat-operator-index
+      spec:
+        image: infra.5g-deployment.lab:8443/redhat/redhat-operator-index:v4.14-1700503430
+      policyName: config-policies
+    - fileName: ReduceMonitoringFootprint.yaml
+      policyName: config-policies
+    - fileName: StorageLVMOSubscriptionNS.yaml
+      metadata:
+        annotations:
+          workload.openshift.io/allowed: management
+      policyName: subscription-policies
+    - fileName: StorageLVMOSubscriptionOperGroup.yaml
+      policyName: subscription-policies
+    - fileName: StorageLVMOSubscription.yaml
+      spec:
+        name: lvms-operator
+        channel: stable-4.14
+        source: redhat-operator-index
+      policyName: subscription-policies
+EOF
+```
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+- common-414.yaml
+resources:
+- ../resources/cluster-image-set.yaml
+EOF
+```
+
+### Group Policies (NOT YET MODIFIED or USED)
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno.yaml
+---
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "du-sno"
+  namespace: "ztp-policies"
+spec:
+  bindingRules:
+    group-du-sno: ""
+    logicalGroup: "active"
+  mcp: master
+  remediationAction: inform
+  sourceFiles:
+    - fileName: DisableSnoNetworkDiag.yaml
+      policyName: group-policies
+EOF
+```
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno-validator.yaml
+---
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "du-sno-validator"
+  namespace: "ztp-policies"
+spec:
+  bindingRules:
+    group-du-sno: ""
+    logicalGroup: "active"
+  bindingExcludedRules:
+    ztp-done: ""
+  mcp: "master"
+  sourceFiles:
+    - fileName: validatorCRs/informDuValidator.yaml
+      remediationAction: inform
+      policyName: "validation"
+EOF
+```
+
+### Crafting Site Policies (Not yet pasted)
+
+Create in 
+
+The put kustomization there like:
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/site-specific-policies/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+#- group-lb-du-data.yaml
+EOF
+```
+
+
+### Crafting testing Policies (Not yet pasted)
+
+### Namespace for policies & clusterimageset:
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/resources/policies-namespace.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ztp-policies
+  labels:
+    name: ztp-policies
+EOF
+```
+
+The cluster image resource being used by clusters is the (disconnected) registry that is hosted locally on this bastion. The `siteconfig` files refer to this resource by using `clusterImageSetNameRef: "active-ocp-version"`.  So this needs to be defined as well. As this is relevant to policy, its manifest is being created under the `policy/resources` location: 
+
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/resources/cluster-image-set.yaml
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: active-ocp-version
+spec:
+  releaseImage: infra.5g-deployment.lab:8443/openshift/release-images:4.14.0-x86_64
+EOF
+```
+
+Kustomization for the namespace: 
+
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/resources/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - policies-namespace.yaml
+  - cluster-image-set.yaml
+EOF
+```
+
+![image4](images/lab_build_4.png)
+
+### Commit to GIT: 
+
+```
+cd ~/5g-deployment-lab/ztp-repository
+git add --all
+git commit -m 'Added policies information'
+git push origin main
+cd ~
+```
+
+### Extra unused content: 
+```
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - fleet/
+  - sites/
+EOF
+```
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/sites/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - hub-1/
+EOF
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/sites/hub-1/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - site-sno2.yaml
+resources:
+  - hub1-sites-data.yaml
+EOF
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - active/
+  - testing/
+EOF
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - common-414.yaml
+  - group-du-sno.yaml
+#  - group-du-sno-validator.yaml
+EOF
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/testing/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - common-414.yaml
+  - group-du-sno.yaml
+#  - group-du-sno-validator.yaml
+EOF
+```
