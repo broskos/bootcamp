@@ -17,4 +17,11 @@ oc get -n openshift-gitops secrets openshift-gitops-cluster -o jsonpath='{.data.
 output will be:
 > bWHpNqcBdt6UDXPMQo1Z3xAYGKE8J4mS[root@hypervisor ~]#
 
-## Check 
+## Check GitOps deployments are health:
+```
+oc get deployment -n openshift-gitops
+```
+
+output should show all deployments are running successfully 
+
+
