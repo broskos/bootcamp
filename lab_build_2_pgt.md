@@ -129,6 +129,9 @@ EOF
 
 ### Crafting testing Policies (Not yet pasted)
 
+asdfasdf
+asdf
+
 ### Namespace for policies & clusterimageset:
 
 ```
