@@ -248,6 +248,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 generators:
   - site-group-1/5glab.yaml
+resources:
+  - site-group-1/secrets/
 EOF
 ```
 ![image3](images/lab_build_3.png)
