@@ -1,4 +1,3 @@
-
 ## Install Argo Apps:
 
 
@@ -80,6 +79,8 @@ metadata:
   namespace: openshift-gitops
 spec:
   clusterResourceWhitelist:
+  - group: 'hive.openshift.io'
+    kind: ClusterImageSet
   - group: 'cluster.open-cluster-management.io'
     kind: ManagedCluster
   - group: ''
@@ -206,10 +207,12 @@ resources:
   - policies-app-project.yaml
   - gitops-policy-rolebinding.yaml
   - gitops-cluster-rolebinding.yaml
-  - clusters-app.yaml
-  - policies-app.yaml
+  - cluster-app.yaml
+  - policy-app.yaml
 EOF
 ```
+
+### Verify:
 
 ```
 ls ~/5g-deployment-lab/deployment/
@@ -217,3 +220,31 @@ ls ~/5g-deployment-lab/deployment/
 
 > app-project.yaml&nbsp;&nbsp;gitops-cluster-rolebinding.yaml&nbsp;&nbsp;kustomization.yaml&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;policy-app.yaml<br>
 > cluster-app.yaml&nbsp;&nbsp;gitops-policy-rolebinding.yaml&nbsp;&nbsp;&nbsp;policies-app-project.yaml<br>
+
+### Run the applicaitons: 
+
+```
+[root@hypervisor 5g-deployment-lab]# oc apply -k ~/5g-deployment-lab/deployment/
+namespace/clusters-sub created
+namespace/policies-sub created
+clusterrolebinding.rbac.authorization.k8s.io/gitops-cluster created
+clusterrolebinding.rbac.authorization.k8s.io/gitops-policy created
+appproject.argoproj.io/policy-app-project created
+appproject.argoproj.io/ztp-app-project created
+application.argoproj.io/clusters created
+application.argoproj.io/policies created
+[root@hypervisor 5g-deployment-lab]# 
+[root@hypervisor 5g-deployment-lab]# oc get applications.argoproj.io -A
+NAMESPACE          NAME                       SYNC STATUS   HEALTH STATUS
+openshift-gitops   clusters                   OutOfSync     Healthy
+openshift-gitops   hub-operators-config       Synced        Healthy
+openshift-gitops   hub-operators-deployment   Synced        Healthy
+openshift-gitops   policies                   Synced        Healthy
+openshift-gitops   sno1-deployment            Synced        Healthy
+[root@hypervisor 5g-deployment-lab]# oc get policies -A
+NAMESPACE      NAME                           REMEDIATION ACTION   COMPLIANCE STATE   AGE
+ztp-policies   common-config-policies         inform                                  17s
+ztp-policies   common-subscription-policies   inform                                  17s
+[root@hypervisor 5g-deployment-lab]# 
+
+```
