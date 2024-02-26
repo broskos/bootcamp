@@ -1,5 +1,4 @@
 
-
 ## Create SNO2 & SNO3 Pre-Reqs:
 
 There are two pre-requisites to site config: 
@@ -222,7 +221,13 @@ resources:
   - site-group-1/secrets/
 EOF
 ```
-![image3](images/lab_build_3.png)
+
+### Checek the status of directory structure: 
+
+```
+tree /root/5g-deployment-lab/ztp-repository
+```
+![image3](images/lab_build_1.png)
 
 
 ### Update GIT: 
