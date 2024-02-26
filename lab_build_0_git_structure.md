@@ -7,6 +7,31 @@ clusters/resources --> policies/manifests
 site-policies --> policies 
 hub-1 --> site-group-1
 ```
+## Accessing Git Repo: 
+Access the Git Repo by using your browser and pointing it to: 
+```
+http://infra.5g-deployment.lab:3000/
+```
+
+You will see the initial Git Screen as a result: 
+
+Use the "SignIn" Option, and the credentials `student` , `student` to login to Git: 
+
+![images](images/git_3.png)
+
+## Creating an empty ZTP repository: 
+
+Using the `New Repository` option (as shown in figure below), start the creation of a new empty repository: 
+
+![images](images/git_4.png)
+
+Name the repository `ztp-repository` , as shown in following figure: 
+
+![images](images/git_5.png)
+
+Upon successful creation of repository, you will see a message similiar to the following: 
+
+![images](images/git_6.png)
 
 ## Cloning Git Repo: 
 
@@ -29,3 +54,5 @@ git add --all
 git commit -m 'Initialized repo structure'
 git push origin main
 ```
+
+![image1](images/lab_build_0.png)
