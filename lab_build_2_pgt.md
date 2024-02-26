@@ -174,8 +174,6 @@ resources:
 EOF
 ```
 
-![image4](images/lab_build_4.png)
-
 ### Top level kustomization : 
 
 ```
@@ -191,7 +189,15 @@ bases:
 EOF
 ```
 
+### Final View: 
 
+The directory structure at this point should look like the following: 
+
+```
+tree ~/5g-deployment-lab/
+```
+
+![image4](images/lab_build_2.png)
 
 ### Commit to GIT: 
 
