@@ -1,6 +1,6 @@
 ```
 sudo -i 
-dnf install -y tree jq
+dnf install -y tree jq bind-utils
 oc completion bash > oc_bash_completion
 source oc_bash_completion 
 mv oc_bash_completion /etc/bash_completion.d/
