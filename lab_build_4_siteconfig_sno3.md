@@ -1,4 +1,3 @@
-
 # Todo: 
 - fix ip, mac, bmc, etc. in manifest
 - extramanifest for sno3 (possibly an MCP?)   ...
