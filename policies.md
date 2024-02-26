@@ -26,7 +26,7 @@ spec:
     #
     # Label node for Storage
     #
-    - fileName: label.yml
+    - fileName: label.yaml
       policyName: "label-nodes"
       metadata:
         name: master1.cwl-site1.npss.bos2.lab
