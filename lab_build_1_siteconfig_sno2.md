@@ -1,4 +1,3 @@
-
 ## Create SNO2 & SNO3 Pre-Reqs:
 
 There are two pre-requisites to site config: 
@@ -88,7 +87,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - sno2/
-  - sno3/
+#  - sno3/
 EOF
 ```
 
