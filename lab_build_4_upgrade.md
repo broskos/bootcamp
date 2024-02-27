@@ -63,25 +63,28 @@ But the only SNO2 has these labels assosiated with it, as seen here:
 ```
 oc get managedcluster --show-labels | grep "du-zone\|logicalGroup"
 ```
-> nbsp;sno2 nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp;true nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp;https://api.sno2.5g-deployment.lab:6443 nbsp; nbsp; nbsp;True nbsp; nbsp; nbsp; nbsp; nbsp;True nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp; nbsp;8h nbsp; nbsp; nbsp; nbsp;app.kubernetes.io/instance=<br>
-> nbsp;clusters,cluster.open-cluster-management.io/clusterset=default,clusterID=915a5c43-9236-472c-bf07-ce106655fc90,common=ocp414,du-<br> nbsp;
-> nbsp;site=sno2du-zone=europe,feature.open-cluster-management.io/addon-cluster-proxy=available,feature.open-cluster-management.io/add<br>
-> nbsp;on-config-policy-controller=available,feature.open-cluster-management.io/addon-governance-policy-framework=available,feature.op<br>
-> nbsp;en-cluster-management.io/addon-work-manager=available,group-du-sno=,logicalGroup=active,name=sno2,openshiftVersion-major-minor=<br>
-> nbsp;4.14,openshiftVersion-major=4,openshiftVersion=4.14.0,ztp-done=<br>
+> &nbsp;sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+> &nbsp;&nbsp;https://api.sno2.5g-deployment.lab:6443&nbsp;&nbsp;&nbsp;True&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+> &nbsp;&nbsp;8h&nbsp;&nbsp;&nbsp;&nbsp;app.kubernetes.io/instance=<br>
+> &nbsp;clusters,cluster.open-cluster-management.io/clusterset=default,clusterID=915a5c43-9236-472c-bf07-ce106655fc90,common=ocp414,du-<br>&nbsp;
+> &nbsp;site=sno2,**du-zone=europe**,feature.open-cluster-management.io/addon-cluster-proxy=available,feature.open-cluster-management.io/add<br>
+> &nbsp;on-config-policy-controller=available,feature.open-cluster-management.io/addon-governance-policy-framework=available,feature.op<br>
+> &nbsp;en-cluster-management.io/addon-work-manager=available,group-du-sno=,**logicalGroup=active**,name=sno2,openshiftVersion-major-minor=<br>
+> &nbsp;4.14,openshiftVersion-major=4,openshiftVersion=4.14.0,ztp-done=<br>
 
 Now looking at policy status: 
 
 ```
 oc get policy -A
 ```
-NAMESPACE      NAME                                             REMEDIATION ACTION   COMPLIANCE STATE   AGE
-sno2           ztp-policies.common-config-policies              inform               Compliant          8h
-sno2           ztp-policies.common-subscription-policies        inform               Compliant          8h
-sno2           ztp-policies.europe-snos-upgrade-version-414-1   inform               NonCompliant       116s
-ztp-policies   common-config-policies                           inform               Compliant          8h
-ztp-policies   common-subscription-policies                     inform               Compliant          8h
-ztp-policies   europe-snos-upgrade-version-414-1                inform               NonCompliant       116s
+> NAMESPACE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REMEDIATION&nbsp;ACTION&nbsp;&nbsp;&nbsp;COMPLIANCE&nbsp;STATE&nbsp;&nbsp;&nbsp;AGE<br>   
+> sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ztp-policies.common-config-policies&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Compliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8h<br>
+> sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ztp-policies.common-subscription-policies&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Compliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8h<br>
+> sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ztp-policies.europe-snos-upgrade-version-414-1&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NonCompliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;116s<br>
+> ztp-policies&nbsp;&nbsp;&nbsp;common-config-policies&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Compliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8h<br>
+> ztp-policies&nbsp;&nbsp;&nbsp;common-subscription-policies&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Compliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8h<br>
+> ztp-policies&nbsp;&nbsp;&nbsp;europe-snos-upgrade-version-414-1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inform&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NonCompliant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;116s<br>
+
 
 Lets check the reason for non-compliance of this policy: 
 
