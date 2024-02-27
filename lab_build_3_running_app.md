@@ -259,4 +259,14 @@ ztp-policies   common-subscription-policies   inform                            
 ```
 while true; do echo "############## echo -n `date` ##############"; echo "---------------- BMH ----------------"; oc get bmh -A; echo "---------------- AgentClusterInstall ----------------"; oc get agentclusterinstall -A; echo "---------------- Clusters ----------------"; oc get managedclusters sno2 --show-labels; echo "---------------- Policies ----------------"; oc get policy -A; echo "---------------- CGU ----------------"; oc get cgu -A; sleep 15; done
 ```
+### After cluster is deployed: 
 
+```
+export cluster=sno2
+oc get secret -n $cluster $cluster-admin-kubeconfig -o jsonpath='{.data.kubeconfig}' | base64 -d > sno2-kubeconfig
+```
+```
+oc get nodes --kubeconfig ./sno2-kubeconfig 
+```
+NAME                      STATUS   ROLES                         AGE     VERSION
+sno2.5g-deployment.lab    Ready    control-plane,master,worker   5h57m   v1.27.6+f67aeb3
