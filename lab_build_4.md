@@ -1,14 +1,6 @@
 ## Install Argo Apps:
 
 
-### Dump the container: 
-
-```
-mkdir -p ~/5g-deployment-lab/ztp-pipeline/
-podman login infra.5g-deployment.lab:8443 -u admin -p r3dh4t1! --tls-verify=false
-podman run --log-driver=none --rm --tls-verify=false infra.5g-deployment.lab:8443/openshift4/ztp-site-generate-rhel8:v4.14.0-71 extract /home/ztp --tar | tar x -C ~/5g-deployment-lab/ztp-pipeline/
-```
-
 ### Create the Projects manifests:
 ```
 mkdir ~/5g-deployment-lab/deployment
@@ -40,6 +32,7 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+EOF
 ```
 
 ```
@@ -69,6 +62,7 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+EOF
 ```
 ```
 cat << EOF > ~/5g-deployment-lab/deployment/app-project.yaml
@@ -224,27 +218,45 @@ ls ~/5g-deployment-lab/deployment/
 ### Run the applicaitons: 
 
 ```
-[root@hypervisor 5g-deployment-lab]# oc apply -k ~/5g-deployment-lab/deployment/
-namespace/clusters-sub created
-namespace/policies-sub created
-clusterrolebinding.rbac.authorization.k8s.io/gitops-cluster created
-clusterrolebinding.rbac.authorization.k8s.io/gitops-policy created
-appproject.argoproj.io/policy-app-project created
-appproject.argoproj.io/ztp-app-project created
-application.argoproj.io/clusters created
-application.argoproj.io/policies created
-[root@hypervisor 5g-deployment-lab]# 
-[root@hypervisor 5g-deployment-lab]# oc get applications.argoproj.io -A
+oc apply -k ~/5g-deployment-lab/deployment/
+```
+> namespace/clusters-sub created<br>
+> namespace/policies-sub created<br>
+> clusterrolebinding.rbac.authorization.k8s.io/gitops-cluster created<br>
+> clusterrolebinding.rbac.authorization.k8s.io/gitops-policy created<br>
+> appproject.argoproj.io/policy-app-project created<br>
+> appproject.argoproj.io/ztp-app-project created<br>
+> application.argoproj.io/clusters created<br>
+> application.argoproj.io/policies created<br>
+
+## Verification: 
+
+### Verify the status of application:
+
+```
+oc get applications.argoproj.io -A
+```
+
 NAMESPACE          NAME                       SYNC STATUS   HEALTH STATUS
 openshift-gitops   clusters                   OutOfSync     Healthy
 openshift-gitops   hub-operators-config       Synced        Healthy
 openshift-gitops   hub-operators-deployment   Synced        Healthy
 openshift-gitops   policies                   Synced        Healthy
 openshift-gitops   sno1-deployment            Synced        Healthy
-[root@hypervisor 5g-deployment-lab]# oc get policies -A
+
+### Verify the status of application:
+
+```
+oc get policies -A
+```
+
 NAMESPACE      NAME                           REMEDIATION ACTION   COMPLIANCE STATE   AGE
 ztp-policies   common-config-policies         inform                                  17s
 ztp-policies   common-subscription-policies   inform                                  17s
-[root@hypervisor 5g-deployment-lab]# 
+ 
+### Continuous Monitoring:
 
 ```
+while true; do echo "############## echo -n `date` ##############"; echo "---------------- BMH ----------------"; oc get bmh -A; echo "---------------- AgentClusterInstall ----------------"; oc get agentclusterinstall -A; echo "---------------- Clusters ----------------"; oc get managedclusters sno2 --show-labels; echo "---------------- Policies ----------------"; oc get policy -A; echo "---------------- CGU ----------------"; oc get cgu -A; sleep 15; done
+```
+
