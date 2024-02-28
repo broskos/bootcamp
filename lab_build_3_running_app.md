@@ -2,10 +2,10 @@
 - add verification commands showing details of policies (as they are being applied)
 - add GUI view of completed installation and policy application completed (including ztp-done label)
 
-## Install Argo Apps:
+# Install Argo Apps:
 
 
-### Create the Projects manifests:
+## Create the Application manifests:
 ```
 mkdir ~/5g-deployment-lab/deployment
 ```
@@ -68,6 +68,9 @@ spec:
     - CreateNamespace=true
 EOF
 ```
+
+## Create the Projects manifests:
+
 ```
 cat << EOF > ~/5g-deployment-lab/deployment/app-project.yaml
 apiVersion: argoproj.io/v1alpha1
@@ -161,6 +164,8 @@ spec:
 EOF
 ```
 
+## Create the Role and Role Binding for Argo to use:
+
 ```
 cat << EOF > ~/5g-deployment-lab/deployment/gitops-policy-rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -195,6 +200,8 @@ subjects:
 EOF
 ```
 
+## Create the Kustomization file to apply all the manifests:
+
 ```
 cat << EOF > ~/5g-deployment-lab/deployment/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -210,7 +217,7 @@ resources:
 EOF
 ```
 
-### Verify:
+## Verify that all the files are in place:
 
 ```
 ls ~/5g-deployment-lab/deployment/
@@ -219,11 +226,15 @@ ls ~/5g-deployment-lab/deployment/
 > app-project.yaml&nbsp;&nbsp;gitops-cluster-rolebinding.yaml&nbsp;&nbsp;kustomization.yaml&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;policy-app.yaml<br>
 > cluster-app.yaml&nbsp;&nbsp;gitops-policy-rolebinding.yaml&nbsp;&nbsp;&nbsp;policies-app-project.yaml<br>
 
-### Run the applicaitons: 
+## Run the applicaitons: 
+
+To apply the manifests created above, use the following: 
 
 ```
 oc apply -k ~/5g-deployment-lab/deployment/
 ```
+
+Output will show the following: 
 > namespace/clusters-sub created<br>
 > namespace/policies-sub created<br>
 > clusterrolebinding.rbac.authorization.k8s.io/gitops-cluster created<br>
@@ -233,9 +244,9 @@ oc apply -k ~/5g-deployment-lab/deployment/
 > application.argoproj.io/clusters created<br>
 > application.argoproj.io/policies created<br>
 
-## Verification: 
+# Verification: 
 
-### Verify the status of application:
+### Verify the status of application using CLI:
 
 ```
 oc get applications.argoproj.io -A
@@ -248,7 +259,7 @@ openshift-gitops   hub-operators-deployment   Synced        Healthy
 openshift-gitops   policies                   Synced        Healthy
 openshift-gitops   sno1-deployment            Synced        Healthy
 
-### Verify the status of policies:
+### Verify the status of policies using CLI:
 
 ```
 oc get policies -A
@@ -260,10 +271,47 @@ oc get policies -A
  
 ### Continuous Monitoring:
 
+You can use the following script to continuously monitor the key CRs and their status as the ZTP process progresses: 
+
 ```
 while true; do echo "############## echo -n `date` ##############"; echo "---------------- BMH ----------------"; oc get bmh -A; echo "---------------- AgentClusterInstall ----------------"; oc get agentclusterinstall -A; echo "---------------- Clusters ----------------"; oc get managedclusters sno2 --show-labels; echo "---------------- Policies ----------------"; oc get policy -A; echo "---------------- CGU ----------------"; oc get cgu -A; sleep 15; done
 ```
-### After cluster is deployed: 
+
+## Verify the status of applications using GUI: 
+
+You can conenct to the OpenShift GitOps GUI using either the credentials (stpes to find out the url and credentials can be found [here](https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/gitops.md)), or you can use the option to authenticate using OpenShift Console by using the applications menu as shown here: 
+
+[!image1](images/argo_1)
+
+If using the OpenShift option, you will be asked to allow the application (ArgoCD) to be authorized, and might need to provide your OCP console credentials again. Once connected the ArgoCD GUI, you should see that both the "Cluster" and "Policies" applications are healthy and in Synch (there will be other applications on the screen as well, which have been run previously during lab setup)
+
+[!image1](images/argo_2)
+
+Click on the Cluster and Policies aookucations to see the translated CRs by the ZTP Plugin. If you dont see these in a Healthy and Synced state, you might need to click on the `Refresh` button on the GUI. If that doesn't give the Healthy status, then you will need some troubleshooting to be done.  Normally you will see the followings: 
+
+[!image1](images/argo_3)
+
+[!image1](images/argo_4)
+
+# Track Cluster Deployment: 
+
+## Checking for OpenShift Deployment:
+
+Watch the `oc get managedcusters` and `oc get agentclusterinstall` outputs to determine if OpenShift has been deployed on the cluster. The outputs should show: 
+
+```
+```
+
+## Checking for Policy Deployment: 
+
+At this point, the policies should start to take affect. 
+
+
+## Checking Status of Policies & Cluster using GUI: 
+
+# Acessing the cluster: 
+
+## After cluster is deployed: 
 
 ```
 export cluster=sno2
