@@ -281,17 +281,17 @@ while true; do echo "############## echo -n `date` ##############"; echo "------
 
 You can conenct to the OpenShift GitOps GUI using either the credentials (stpes to find out the url and credentials can be found [here](https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/gitops.md)), or you can use the option to authenticate using OpenShift Console by using the applications menu as shown here: 
 
-[!image1](images/argo_1.png)
+![image1](images/argo_1.png)
 
 If using the OpenShift option, you will be asked to allow the application (ArgoCD) to be authorized, and might need to provide your OCP console credentials again. Once connected the ArgoCD GUI, you should see that both the "Cluster" and "Policies" applications are healthy and in Synch (there will be other applications on the screen as well, which have been run previously during lab setup)
 
-[!image1](images/argo_2.png)
+![image1](images/argo_2.png)
 
 Click on the Cluster and Policies aookucations to see the translated CRs by the ZTP Plugin. If you dont see these in a Healthy and Synced state, you might need to click on the `Refresh` button on the GUI. If that doesn't give the Healthy status, then you will need some troubleshooting to be done.  Normally you will see the followings: 
 
-[!image1](images/argo_3.png)
+![image1](images/argo_3.png)
 
-[!image1](images/argo_4.png)
+![image1](images/argo_4.png)
 
 # Track Cluster Deployment: 
 
