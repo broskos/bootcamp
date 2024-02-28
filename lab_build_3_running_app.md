@@ -324,9 +324,14 @@ oc get agentclusterinstall -n sno2
 > NAME&nbsp;&nbsp;&nbsp;CLUSTER&nbsp;&nbsp;&nbsp;STATE<br>
 > sno2&nbsp;&nbsp;&nbsp;sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;installing<br>
 
-{{< panel header="**Note**" header-bg="blue" >}}
-NOTE DESCRIPTION
-{{< /panel >}}
+You should be looking for the folloiwng output that shows `sno2` has JOINED the managemwent clust is is AVAILABLE: 
+```
+oc get managedcluster sno2
+```
+> NAME&nbsp;&nbsp;&nbsp;HUB&nbsp;ACCEPTED&nbsp;&nbsp;&nbsp;MANAGED&nbsp;CLUSTER&nbsp;URLS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JOINED&nbsp;&nbsp;&nbsp;AVAILABLE&nbsp;&nbsp;&nbsp;AGE<br>
+> sno2&nbsp;&nbsp;&nbsp;true&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https://api.sno2.5g-deployment.lab:6443&nbsp;&nbsp;&nbsp;True&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;34m<br>
+
+**NOTE** It might take around 20-30 minutes for the cluster installation to complete
 
 ## Checking for Policy Deployment: 
 
