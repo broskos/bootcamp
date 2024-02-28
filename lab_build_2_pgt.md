@@ -1,19 +1,3 @@
-# ToDo: (when reach app section)
-```
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: policy-app-project
-  namespace: openshift-gitops
-spec:
-  clusterResourceWhitelist:
-  - group: ''
-    kind: Namespace
-  - group: hive.openshift.io
-    kind: ClusterImageSet
-  destinations:
-
-```
 
 ## Configuring Policies:
 
@@ -68,69 +52,6 @@ generators:
 - common-414.yaml
 EOF
 ```
-
-### Group Policies (NOT YET MODIFIED or USED)
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno.yaml
----
-apiVersion: ran.openshift.io/v1
-kind: PolicyGenTemplate
-metadata:
-  name: "du-sno"
-  namespace: "ztp-policies"
-spec:
-  bindingRules:
-    group-du-sno: ""
-    logicalGroup: "active"
-  mcp: master
-  remediationAction: inform
-  sourceFiles:
-    - fileName: DisableSnoNetworkDiag.yaml
-      policyName: group-policies
-EOF
-```
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno-validator.yaml
----
-apiVersion: ran.openshift.io/v1
-kind: PolicyGenTemplate
-metadata:
-  name: "du-sno-validator"
-  namespace: "ztp-policies"
-spec:
-  bindingRules:
-    group-du-sno: ""
-    logicalGroup: "active"
-  bindingExcludedRules:
-    ztp-done: ""
-  mcp: "master"
-  sourceFiles:
-    - fileName: validatorCRs/informDuValidator.yaml
-      remediationAction: inform
-      policyName: "validation"
-EOF
-```
-
-### Crafting Site Policies (Not yet pasted)
-
-Create in 
-
-The put kustomization there like:
-```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/site-specific-policies/kustomization.yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-#- group-lb-du-data.yaml
-EOF
-```
-
-
-### Crafting testing Policies (Not yet pasted)
-
-asdfasdf
-asdf
 
 ### Namespace for policies & clusterimageset:
 
@@ -208,6 +129,72 @@ git commit -m 'Added policies information'
 git push origin main
 cd ~
 ```
+
+# Ununsed Contents:
+
+
+### Group Policies (NOT YET MODIFIED or USED)
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno.yaml
+---
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "du-sno"
+  namespace: "ztp-policies"
+spec:
+  bindingRules:
+    group-du-sno: ""
+    logicalGroup: "active"
+  mcp: master
+  remediationAction: inform
+  sourceFiles:
+    - fileName: DisableSnoNetworkDiag.yaml
+      policyName: group-policies
+EOF
+```
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/site-policies/fleet/active/group-du-sno-validator.yaml
+---
+apiVersion: ran.openshift.io/v1
+kind: PolicyGenTemplate
+metadata:
+  name: "du-sno-validator"
+  namespace: "ztp-policies"
+spec:
+  bindingRules:
+    group-du-sno: ""
+    logicalGroup: "active"
+  bindingExcludedRules:
+    ztp-done: ""
+  mcp: "master"
+  sourceFiles:
+    - fileName: validatorCRs/informDuValidator.yaml
+      remediationAction: inform
+      policyName: "validation"
+EOF
+```
+
+### Crafting Site Policies (Not yet pasted)
+
+Create in 
+
+The put kustomization there like:
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/site-specific-policies/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+#- group-lb-du-data.yaml
+EOF
+```
+
+
+### Crafting testing Policies (Not yet pasted)
+
+asdfasdf
+asdf
 
 ### Extra unused content: 
 ```
