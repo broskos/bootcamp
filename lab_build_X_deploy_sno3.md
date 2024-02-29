@@ -11,6 +11,11 @@ sed -i s/sno2/sno3/g /opt/dnsmasq/include.d/sno3.ipv4
 sed -i s/40/42/g /opt/dnsmasq/include.d/sno3.ipv4
 ```
 
+Restart DNS for new entries to take affect: 
+```
+systemctl restart dnsmasq-virt
+```
+
 To see the VMs: 
 
 ```
@@ -162,9 +167,14 @@ spec:
 EOF
 ```
 
+## Add SNO3 to the kustomization files:
+
 ```
 sed -i "s/generators\:/generators\:\n  - sno3\.yaml/g" ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/kustomization.yaml
+sed -i "s/generators\:/generators\:\n  - site-group-1\/sno3\.yaml/g" ~/5g-deployment-lab/ztp-repository/clusters/kustomization.yaml
 ```
+
+## Push to Git to kick off the installation:
 
 ```
 cd ~/5g-deployment-lab/ztp-repository
