@@ -1,12 +1,4 @@
-# Todo: 
-Followings were changed: 
-```
-pre-reqs --> secrets
-site-configs --> clusters
-clusters/resources --> policies/manifests
-site-policies --> policies 
-hub-1 --> site-group-1
-```
+
 ## Accessing Git Repo: 
 Access the Git Repo by using your browser and pointing it to: 
 ```
