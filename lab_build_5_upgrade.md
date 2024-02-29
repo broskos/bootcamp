@@ -9,9 +9,9 @@ mkdir ~/5g-deployment-lab/ztp-repository/policies/fleet
 ## Find image pointers: 
 
 The lab image registry has already been populated with 14.4.1 OpenShift image. You can verify this by looking up the repository: 
-``````
+```
 podman exec -it registry ls -al /registry/docker/registry/v2/repositories/openshift/release-images/_manifests/tags/
-``````
+```
 
 > total&nbsp;16<br>
 > drwxr-xr-x&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;root&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;root&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4096&nbsp;Feb&nbsp;28&nbsp;16:05&nbsp;.<br>
@@ -20,7 +20,7 @@ podman exec -it registry ls -al /registry/docker/registry/v2/repositories/opensh
 > drwxr-xr-x&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;root&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;root&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4096&nbsp;Feb&nbsp;28&nbsp;16:01&nbsp;**4.14.1-x86_64**<br>
 
 You can now optain the sha256 link to this as shown here: 
-``````
+```
 podman exec -it registry cat  /registry/docker/registry/v2/repositories/openshift/release-images/_manifests/tags/4.14.1-x86_64/current/link
 ```
 
