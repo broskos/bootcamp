@@ -1,6 +1,26 @@
+# Image Upgrade using TALM:
+
+Start by creating a working directly for the upgrade. Lets call this directory `fleet`
+
 ```
 mkdir ~/5g-deployment-lab/ztp-repository/policies/fleet
 ```
+
+## Find image pointers: 
+
+The lab image registry has already been populated with 14.4.1 OpenShift image. You can verify this by looking up the repository: 
+
+podman exec -it registry ls -al /registry/docker/registry/v2/repositories/openshift/release-images/_manifests/tags/
+$$
+total 16
+drwxr-xr-x    4 root     root          4096 Feb 28 16:05 .
+drwxr-xr-x    4 root     root          4096 Feb 28 16:01 ..
+drwxr-xr-x    4 root     root          4096 Feb 28 16:05 4.14.0-x86_64
+drwxr-xr-x    4 root     root          4096 Feb 28 16:01 4.14.1-x86_64
+
+$$
+
+
 ```
 cat << EOF > ~/5g-deployment-lab/ztp-repository/policies/fleet/zone-europe-upgrade-414-1.yaml
 ---
