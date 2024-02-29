@@ -5,14 +5,12 @@ oc completion bash > oc_bash_completion
 source oc_bash_completion 
 mv oc_bash_completion /etc/bash_completion.d/
 # kcli list vm
-cp /opt/dnsmasq/include.d/sno2.ipv4 /opt/dnsmasq/include.d/sno2w.ipv4
-sed -i s/sno2/sno3/g /opt/dnsmasq/include.d/sno2w.ipv4
-sed -i "s/ocp-sno2w,192.168.125.40/ocp-sno2w,192.168.125.41/g" sno2w.ipv4 
+echo "dhcp-host=aa:aa:aa:aa:04:01,ocp-sno2w,192.168.125.41" > /opt/dnsmasq/include.d/sno2w.ipv4
 # If adding new node: 
 # cp /opt/dnsmasq/include.d/sno2.ipv4 /opt/dnsmasq/include.d/sno3.ipv4
 # sed -i s/sno2/sno3/g /opt/dnsmasq/include.d/sno3.ipv4
 # sed -i s/40/41/g /opt/dnsmasq/include.d/sno3.ipv4
-
+systemctl restart dnsmasq-virt
 kcli create vm -P start=False -P uefi_legacy=true -P plan=hub -P memory=24000 -P numcpus=12 -P disks=[200,200] -P nets=['{"name": "5gdeploymentlab", "mac": "aa:aa:aa:aa:04:01"}'] -P uuid=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0401 -P name=sno2w
 ## kcli list vm
 ## +----------------+--------+----------------+----------------------------------------------------+------+---------+
