@@ -96,7 +96,7 @@ The PGT will result in the three manfists for the CRs , as defined by the ZTP pl
 
 **NOTE** you may have to press `Refresh` instead of waiting for the new sync with Git to take place. 
 
-![image1](upgrade_1.png)
+![image1](images/upgrade_1.png)
 
 ### Checking Policy Applicability for Upgrade:
 
@@ -172,7 +172,7 @@ The non-compliance of the policy can also be viewed
 
 This nonciiance is also visible on the GUI: 
 
-![image1](upgrade_2.png)
+![image1](images/upgrade_2.png)
 
 ### Include SNO1 for upgrade
 
