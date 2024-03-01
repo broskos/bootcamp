@@ -135,12 +135,13 @@ spec:
     serviceNetwork:
       - "172.30.0.0/16"
     cpuPartitioningMode: AllNodes
-    apiVIP: 192.168.125.42
+    # If deploying 3-node, then apiVIP and ingressVIP will need to be defined as below
+    # apiVIP: 192.168.125.42
     # If using dualstack, add IPv6 apiVIP here: (still keep the above line that has only IPv4. We need both!)
     # apiVIPs:
     #  - 192.168.125.42
     #  - fd00:2023:61::4
-    ingressVIP: 192.168.125.42
+    # ingressVIP: 192.168.125.42
     # If using dualstack, add IPv6 IngressVIP here: (still keep the above line that has only IPv4. We need both!)
     #ingressVIPs:
     #  - 192.168.125.42
@@ -173,6 +174,8 @@ spec:
                 type: ethernet
                 state: up
                 ipv4:
+                  - ip: 192.168.125.42
+                    prefix-length: 24
                   enabled: true
                   dhcp: true
                 ipv6:
