@@ -116,7 +116,7 @@ spec:
         inclusionDefault: exclude
         include:
           - 99-chrony.yaml
-          - vpattern.yaml
+          # - vpattern.yaml
     # Cluster labels (this will be used by RHACM)
     clusterLabels:
       common: "ocp414"
