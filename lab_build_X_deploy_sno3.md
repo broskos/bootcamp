@@ -1,6 +1,9 @@
-# Todo: 
-- fix ip, mac, bmc, etc. in manifest
-- extramanifest for sno3 (possibly an MCP?)   ...
+# Installing anohter workload cluster: 
+
+This installation has a couple of things that are being done differently: 
+
+1) the IP address for the the cluster's VIP is being hardcoded in the siteConfig (instead of DHCP allocation)
+2) Extra manifest use is being demonstrated. All default extraManifests are being excluded, and a manifest for chrony configuration through machineConfig is being added. 
 
 ## Create VM and DNS Entries:
 
