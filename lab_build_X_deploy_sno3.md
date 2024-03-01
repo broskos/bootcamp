@@ -2,7 +2,7 @@
 
 This installation has a couple of things that are being done differently: 
 
-1) the IP address for the the cluster's VIP is being hardcoded in the siteConfig (instead of DHCP allocation)
+1) the IP address for the the cluster is being hardcoded in the siteConfig (instead of DHCP allocation)
 2) Extra manifest use is being demonstrated. All default extraManifests are being excluded, and a manifest for chrony configuration through machineConfig is being added. 
 
 ## Create VM and DNS Entries:
@@ -174,6 +174,7 @@ spec:
                 type: ethernet
                 state: up
                 ipv4:
+                  address:
                   - ip: 192.168.125.42
                     prefix-length: 24
                   enabled: true
