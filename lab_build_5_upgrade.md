@@ -366,7 +366,29 @@ After a few minutes, pre-caching will be complete, as can be seen by the CGU sta
 > ztp-install&nbsp;&nbsp;&nbsp;&nbsp;sno2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4h51m&nbsp;&nbsp;&nbsp;Completed&nbsp;&nbsp;&nbsp;&nbsp;All&nbsp;clusters&nbsp;are&nbsp;compliant&nbsp;with&nbsp;all&nbsp;the&nbsp;managed&nbsp;policies<br>
 > ztp-policies&nbsp;&nbsp;&nbsp;update-europe-snos&nbsp;&nbsp;&nbsp;14m&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NotEnabled&nbsp;&nbsp;&nbsp;Not&nbsp;enabled<br>
 
-Note that if you look for the pre-caching pod after the job is completed, you will not find the job or even the namespace existing anymore: 
+Note that if you look for the pre-caching pod after the job is completed, you will not find the job or even the namespace existing anymore. 
+
+### Check pre-cached images:
+
+Just for information, we can check the cached images on the target cluster using the following steps: 
+
+```
+oc debug node/sno2.5g-deployment.lab --kubeconfig ~/sno2-kubeconfig 
+```
+>&nbsp;Starting&nbsp;pod/sno25g-deploymentlab-debug-jbx4h&nbsp;...<br>
+>&nbsp;To&nbsp;use&nbsp;host&nbsp;binaries,&nbsp;run&nbsp;`chroot&nbsp;/host`<br>
+>&nbsp;Pod&nbsp;IP:&nbsp;192.168.125.40<br>
+>&nbsp;If&nbsp;you&nbsp;don't&nbsp;see&nbsp;a&nbsp;command&nbsp;prompt,&nbsp;try&nbsp;pressing&nbsp;enter.<br>
+>&nbsp;sh-4.4#&nbsp;<br>
+
+```
+chroot /host
+podman images | grep 5g
+```
+
+>&nbsp;infra.5g-deployment.lab:8443/redhat/redhat-operator-index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v4.14-1700503430&nbsp;&nbsp;409db6e5b49f&nbsp;&nbsp;3&nbsp;months&nbsp;ago&nbsp;&nbsp;1.78&nbsp;GB<br>
+>&nbsp;infra.5g-deployment.lab:8443/openshift/release-images&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<none>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d3e740b44b78&nbsp;&nbsp;4&nbsp;months&nbsp;ago&nbsp;&nbsp;519&nbsp;MB<br>
+>&nbsp;infra.5g-deployment.lab:8443/openshift/release-images&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<none>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0c7cd234c0ea&nbsp;&nbsp;4&nbsp;months&nbsp;ago&nbsp;&nbsp;519&nbsp;MB<br>
 
 ### Triggering the upgrade: 
 
