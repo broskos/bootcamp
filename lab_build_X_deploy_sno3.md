@@ -132,6 +132,16 @@ spec:
     serviceNetwork:
       - "172.30.0.0/16"
     cpuPartitioningMode: AllNodes
+    apiVIP: 192.168.125.42
+    # If using dualstack, add IPv6 apiVIP here: (still keep the above line that has only IPv4. We need both!)
+    # apiVIPs:
+    #  - 192.168.125.42
+    #  - fd00:2023:61::4
+    ingressVIP: 192.168.125.42
+    # If using dualstack, add IPv6 IngressVIP here: (still keep the above line that has only IPv4. We need both!)
+    #ingressVIPs:
+    #  - 192.168.125.42
+    #  - fd00:2023:61::5
     additionalNTPSources:
       - infra.5g-deployment.lab
     holdInstallation: false
