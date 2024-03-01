@@ -9,7 +9,7 @@ oc apply -f ~/5g-deployment-lab/deployment/cluster-app.yaml
 ```
 
 ```
-kcli show vm sno3 | grep mac
+kcli show vm sno2w | grep mac
 net interface: eth0 mac: aa:aa:aa:aa:04:01 net: 5gdeploymentlab type: routed
 ```
 
@@ -63,6 +63,7 @@ EOF
 
 ```
 cd ~/5g-deployment-lab/ztp-repository/
+git add .
 git commit -m "adding sno2 worker"
 git push
 ```
@@ -74,8 +75,7 @@ while true; do echo "############## echo -n `date` ##############"; echo "------
 ```
 oc get nodes --kubeconfig ./sno2-kubeconfig 
 ```
-NAME                      STATUS   ROLES                         AGE     VERSION
-sno2.5g-deployment.lab    Ready    control-plane,master,worker   5h57m   v1.27.6+f67aeb3
-sno2w.5g-deployment.lab   Ready    worker                        69m     v1.27.6+f67aeb3
+> NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STATUS&nbsp;&nbsp;&nbsp;ROLES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VERSION<br>
+> sno2.5g-deployment.lab&nbsp;&nbsp;&nbsp;&nbsp;Ready&nbsp;&nbsp;&nbsp;&nbsp;control-plane,master,worker&nbsp;&nbsp;&nbsp;5h57m&nbsp;&nbsp;&nbsp;v1.27.6+f67aeb3<br>
+> sno2w.5g-deployment.lab&nbsp;&nbsp;&nbsp;Ready&nbsp;&nbsp;&nbsp;&nbsp;worker&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;69m&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v1.27.6+f67aeb3<br>
 
-```
