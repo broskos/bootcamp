@@ -217,6 +217,6 @@ ssh core@192.168.125.42 -i ~/.ssh/snokey "cat /etc/chrony.conf "
 ```
 You will see:
 
-driftfile /var/lib/chrony/drift
-makestep 1.0 3
-server 192.168.125.1.1 iburst
+> driftfile /var/lib/chrony/drift<br>
+> makestep 1.0 3<br>
+> server 192.168.125.1.1 iburst<br>
