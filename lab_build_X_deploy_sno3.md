@@ -1,4 +1,4 @@
-# Installing anohter workload cluster: 
+# Installing another workload cluster: 
 
 This installation has a couple of things that are being done differently: 
 
