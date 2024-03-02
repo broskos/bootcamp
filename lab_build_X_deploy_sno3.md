@@ -207,3 +207,16 @@ Use the following script to monitor installation progress:
 ```
 while true; do echo "################################"; echo "# `date` #"; echo "################################"; echo "---------------- BMH ----------------"; oc get bmh -A; echo "---------------- AgentClusterInstall ----------------"; oc get agentclusterinstall -A; echo "---------------- Clusters ----------------"; oc get managedclusters sno3 --show-labels; echo "---------------- Policies ----------------"; oc get policy -A; echo "---------------- CGU ----------------"; oc get cgu -A; sleep 15; done
 ```
+
+## Check machineconfig:
+
+When the cluster is done installing, check if the extraManifest machineconfig took effect: 
+
+```
+ssh core@192.168.125.42 -i ~/.ssh/snokey "cat /etc/chrony.conf "
+```
+You will see:
+
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+server 192.168.125.1.1 iburst
