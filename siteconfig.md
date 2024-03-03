@@ -1,6 +1,3 @@
-# Todo: 
-- Add comments after first time plug in is run, to observe and go through the rendered files
-
 
 ### Install the ZTP Plugin Locally:
 ```
