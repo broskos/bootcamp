@@ -8,9 +8,11 @@ sudo -i
 mkdir -p ~/ztp/plugin/
 ```
 ```
-podman cp $(podman create --name policgentool --rm registry.redhat.io/openshift4/ztp-site-generate-rhel8:v4.14):/kustomize/plugin/ran.openshift.io ~/ztp/plugin/
+podman cp $(podman create --name policgentool --rm quay.io/openshift-kni/ztp-site-generator:latest):/kustomize/plugin/ran.openshift.io ~/ztp/plugin/
 podman rm -f policgentool
 ```
+
+**NOTE** If production environment, you would use the ztp-plugin image from `registry.redhat.io/openshift4/ztp-site-generate-rhel8`. For example, `registry.redhat.io/openshift4/ztp-site-generate-rhel8:v4.14` However, here we are pulling from the public repo to avoid any login requirements for podman pull. 
 
 ### Create SiteConfig:
 
@@ -117,7 +119,7 @@ EOF
 mkdir -p ~/ztp/5glab/extramanifests
 ```
 ```
-cat <<EOF > ~/ztp/5glab/extramanifest/CS.yaml
+cat <<EOF > ~/ztp/5glab/extramanifests/CS.yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
@@ -129,7 +131,7 @@ spec:
 EOF
 ``` 
 ```
-cat <<EOF > ~/ztp/5glab/extramanifest/enable-crun-master.yaml
+cat <<EOF > ~/ztp/5glab/extramanifests/enable-crun-master.yaml
 ---
 apiVersion: machineconfiguration.openshift.io/v1
 kind: ContainerRuntimeConfig
@@ -214,6 +216,6 @@ Output will look like:
 > kind: ManagedCluster<br>
 > kind: AgentClusterInstall<br>
 > kind: ClusterDeployment<br>
->     kind: AgentClusterInstall<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kind: AgentClusterInstall<br>
 > kind: BareMetalHost<br>
 
