@@ -1,5 +1,41 @@
 # OpenShift GitOps Lab
 
+## Install the GitOps Operator: 
+
+```
+cat << EOF | oc apply -f - 
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-operators
+spec:
+  channel: latest 
+  installPlanApproval: Automatic
+  name: openshift-gitops-operator 
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace 
+EOF
+```
+By default, the operator installs in the `openshift-gitops` namespace,and uses the service-account `openshift-gitops-argocd-application-controller`. This service account has limited privilages on the cluster. Since we want to create various resources with the objective of understanding the GitOps applications and how they work, we can go ahead and give this service account a cluster-admin level priviage. 
+**NOTE** in a production environment, you may need to be more restrictive about the role that you bind to this service account and the namespaces you give it access to. 
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argocd-controller-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
+```
+
+
 ## Check if GitOps Operator is installed:
 
 ### Get Routes:
