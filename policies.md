@@ -6,7 +6,7 @@ Note: the steps defined in siteconfig lab would need to be completed before runn
 
 ```
 mkdir -p ~/ztp/5glabpolicies/source-crs
-cd 5glabpolicies
+cd ~/ztp/5glabpolicies
 ```
 
 ### Create a PolicyGenTemplate File: 
@@ -62,6 +62,7 @@ EOF
 ### Run the kustomization command with plugin: 
 
 ```
+export KUSTOMIZE_PLUGIN_HOME=/root/ztp/plugin
 kustomize build ./ --enable-alpha-plugins > output.yaml
 ```
 
