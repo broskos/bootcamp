@@ -1,18 +1,34 @@
-### Install the ZTP Plugin Locally:
+# Understand the ZTP Plugin:
+
+Purpose: To understand the use of Red Hat OpenShift ZTP Plug-in. 
+
+## Install the ZTP Plugin Locally:
+
+Create Directory structure first: 
+
 ```
 sudo -i
 mkdir -p ~/ztp/plugin/
 ```
+### Extract ZTP Plugin:: 
+
 ```
-podman cp $(podman create --name policgentool --rm registry.redhat.io/openshift4/ztp-site-generate-rhel8:v4.14):/kustomize/plugin/ran.openshift.io ~/ztp/plugin/
+podman cp $(podman create --name policgentool --rm quay.io/openshift-kni/ztp-site-generator:latest):/kustomize/plugin/ran.openshift.io ~/ztp/plugin/
 podman rm -f policgentool
 ```
 
-### Create SiteConfig:
+**NOTE** The prduction person of the plugin that you should point to, and use, is on `registry.redhat.io`. So the above command could have pulled `egistry.redhat.io/openshift4/ztp-site-generate-rhel8:v4.14`. However, to by pass use of pull secret and authentication, the public unrestricted version on quay.io is used in this example. 
 
+## Create SiteConfig:
+
+First create a directory structure: 
 ```
 mkdir -p ~/ztp/5glab
 ```
+
+Use the followign as a sample siteconfig file to use: 
+
+**NOTE** there aren't any additional `extraManifsts` being passed to this file, and the use of default `extraManifests` is allowed. 
 
 ```
 cat <<EOF > ~/ztp/5glab/siteconfig.yaml
@@ -108,7 +124,10 @@ generators:
 EOF
 ```
 
-### Create Extra Manifests: 
+## Create Extra Manifests: 
+
+Extra manifests are beibg created here, but since the siteconfig is not currently pointing to these, the lab exercise demonstrates that these will be ignored: 
+
 ```
 mkdir -p ~/ztp/5glab/extramanifests
 ```
@@ -140,9 +159,14 @@ spec:
 EOF
 ```
 
-### Generate manifests 
+## Generate manifests using SiteConfig:
+
+We can now use the ztp plugin to translate the SiteConfig into the target manifests. 
 
 #### Install Kustomize binary and set plugin path:
+
+The plugin is based on kustomize tool. Since we are intending to use it directly (outside of OpenShift environment), we will need to install Kustomize tool locally: 
+
 ```
 export KUSTOMIZE_PLUGIN_HOME=/root/ztp/plugin
 curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
@@ -150,7 +174,7 @@ mv kustomize /usr/bin/
 cd ~/ztp/5glab/
 ```
 
-#### ... with the default and additional Extra-Manifests:
+#### Generate: 
 ```
 kustomize build ./ --enable-alpha-plugins > out_with_all_extramanifests.yaml
 ```
@@ -191,7 +215,13 @@ Output will look like:
 > kind: BareMetalHost<br>
 
 
-#### ... with only selective additional Extra-Manifests:
+#### Generate manifets with selective additional Extra-Manifests:
+
+Lets uncomment the lines related to extraManifests. This will achieve the followings: 
+* default extraManifests will no longer be used
+* The custom defined extraManifest will be included when interpreting the siteconfig file
+
+
 ```
 sed -i s/####//g siteconfig.yaml
 kustomize build ./ --enable-alpha-plugins > out_with_selective_extramanifests.yaml
