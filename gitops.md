@@ -1,5 +1,7 @@
 # OpenShift GitOps Lab
 
+Purpose: Understand and Use OpenShift GitOps Operator (ArgoCD)
+
 ## Install the GitOps Operator: 
 
 ```
@@ -35,8 +37,16 @@ subjects:
     namespace: openshift-gitops
 ```
 
+```
+oc get csv -n openshift-gitops 
+```
 
-## Check if GitOps Operator is installed:
+### Check if GitOps Operator is installed
+
+> NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DISPLAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VERSION&nbsp;&nbsp;&nbsp;REPLACES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PHASE<br>
+> openshift-gitops-operator.v1.11.1&nbsp;&nbsp;&nbsp;Red&nbsp;Hat&nbsp;OpenShift&nbsp;GitOps&nbsp;&nbsp;&nbsp;1.11.1&nbsp;&nbsp;&nbsp;&nbsp;openshift-gitops-operator.v1.11.0&nbsp;&nbsp;&nbsp;Succeeded<br>
+
+## Gather Access Information for GitOps GUI:
 
 ### Get Routes:
 ```
@@ -49,10 +59,10 @@ Output will be somehting like:
 ```
 oc get -n openshift-gitops secrets openshift-gitops-cluster -o jsonpath='{.data.admin\.password}' | base64 -d
 ```
-output will be:
+output will be similiar to:
 > bWHpNqcBdt6UDXPMQo1Z3xAYGKE8J4mS[root@hypervisor ~]#
 
-### Check GitOps deployments are health:
+### Check GitOps deployments are healthy:
 ```
 oc get deployment -n openshift-gitops
 ```
@@ -60,7 +70,7 @@ output should show all deployments are running successfully
 
 ### ArgoCD GUI: 
 
-Access ArgoCD GUI using the information above. The GUI should look like the following: 
+Access ArgoCD GUI using the information above. The GUI should look like the following (you may not see existing applications running in your GUI): 
 
 ![gitops_1](images/gitops_1.png)
 
@@ -68,7 +78,7 @@ Access ArgoCD GUI using the information above. The GUI should look like the foll
 
 Run the following commands:
 ```
-sudo -i
+# sudo -i
 mkdir ~/gitops
 cd ~/gitops
 ```
