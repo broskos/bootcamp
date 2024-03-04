@@ -1,5 +1,7 @@
 # Kustomization Lab:
 
+Goal: to understand use of Kustomization with OpenShift 
+
 ## Create sample manifest:
 
 ``` 
