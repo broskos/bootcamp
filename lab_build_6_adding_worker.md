@@ -10,8 +10,8 @@ oc apply -f ~/5g-deployment-lab/deployment/cluster-app.yaml
 
 ```
 kcli show vm sno2w | grep mac
-net interface: eth0 mac: aa:aa:aa:aa:04:01 net: 5gdeploymentlab type: routed
 ```
+> net interface: eth0 mac: aa:aa:aa:aa:04:01 net: 5gdeploymentlab type: routed
 
 ```
 cat << EOF >> /root/5g-deployment-lab/ztp-repository/clusters/site-group-1/5glab.yaml
