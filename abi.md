@@ -178,3 +178,14 @@ console=tty0 console=ttyS0
 OR 
 console=ttyS0,115200 console=tty0
 
+
+virsh dumpxml hubvm | grep source
+      <source file='/var/lib/libvirt/images/hubvm_0.img'/>
+      <source file='/var/lib/libvirt/images/hubvm_1.img'/>
+      <source file='/var/lib/libvirt/images/agent.x86_64.iso'/>
+      <source network='tnc'/>
+
+
+virsh start --console hubvm 
+
+
