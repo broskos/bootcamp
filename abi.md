@@ -173,5 +173,8 @@ curl -X PATCH -H 'Content-Type: application/json' -d '{
 kcli start vm abinode; virsh console --force abinode
 ```
 
-grub: console=tty0 console=ttyS0
+grub: 
+console=tty0 console=ttyS0 
+OR 
+console=ttyS0,115200 console=tty0
 
