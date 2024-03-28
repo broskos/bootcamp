@@ -111,6 +111,9 @@ chmod u+x mirror-registry
 ## Bring up VM:
 
 ```
+###################
+# Step#10: Bring up VM for mirroring
+###################
 cat << EOF > vm1.yaml
 vm1:
  pool: default
@@ -131,6 +134,9 @@ EOF
 kcli create plan -f vm1.yaml 
 ```
 
+#TODO: 
+echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+systemctl restart sshd
 
 ## Checking Quay DNS entry:
 ```
@@ -159,12 +165,287 @@ Full set of options `https://github.com/quay/mirror-registry`
 > INFO[2024-03-28 07:34:08] Quay installed successfully, config data is stored in /opt/ <br>
 > INFO[2024-03-28 07:34:08] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@tnc) 
 
+## Setting up the VM for mirroring: 
+
+Add credentials to docker auth file: 
+```
+podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .docker/config.json 
+```
+
+Push this file to VM: 
+```
+scp .docker/config.json root@192.168.125.10:~/
+```
+```
+ssh root@192.168.125.10
+```
+```
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/oc-mirror.tar.gz -o oc-mirror.tar.gz
+tar -xvf oc-mirror.tar.gz 
+chmod u+x oc-mirror
+mkdir ~/.docker
+mv config.json ~/.docker/
+```
+```
+cat <<EOF > icsp.yaml
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+archiveSize: 4
+storageConfig:
+  registry:
+    imageURL: quay.tnc.bootcamp.lab:8443/ocp/oc-mirror-metadata #private quay/registry  address
+    skipTLS: true # this would downalod the openshift image service for life cycle management. 
+mirror:
+  platform:
+    channels:
+    - name: stable-4.14
+      type: ocp
+      minVersion: 4.14.1
+      maxVersion: 4.14.18
+    graph: true
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
+      packages:
+      - name: cluster-logging
+        channels:
+        - name: stable
+        - name: stable-5.8
+      - name: advanced-cluster-management 
+        channels:
+        - name: release-2.10 
+      - name: local-storage-operator
+        channels:
+        - name: stable
+      - name: topology-aware-lifecycle-manager
+        channels:
+        - name: stable
+      - name: quay-operator
+        channels:
+        - name: stable-3.10
+      - name: openshift-gitops-operator
+        channels:
+        - name: latest
+  additionalImages:
+  - name: registry.redhat.io/ubi8/ubi:latest
+  helm: {}
+EOF
+```
+## Mirror: 
+
+```
+./oc-mirror --config=./icsp.yaml docker://quay.tnc.bootcamp.lab:8443 --dest-skip-tls=true --source-skip-tls=true
+```
 
 
-
-
-
-
+# Install ABI: 
 
 ## Installer: 
-https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz
+
+```
+wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz
+tar -xvf tar -xvf ./openshift-install-linux-4.14.18.tar.gz
+rm -f openshift-install-linux-4.14.18.tar.gz
+mv openshift-install /usr/bin/
+```
+
+## Create install yamls:
+
+```
+cat << EOF > agent-config.yaml
+apiVersion: v1alpha1
+metadata:
+  name: mgmt				# tag, doesn't seem to mean anything
+rendezvousIP: 192.168.125.100
+hosts:
+  - hostname: sno			# hostname, but not necessarily node name
+    interfaces:
+     - name: eth0			# enp1s0
+       macAddress: 52:54:00:35:bb:80
+    networkConfig:
+      interfaces:
+      - name: eth0
+        state: up
+        ipv4:
+          address:
+          - ip: 192.168.125.100
+            prefix-length: 24
+          enabled: true
+          dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - 192.168.125.1
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.125.1
+            table-id: 254
+            next-hop-interface: eth0
+EOF
+cat << EOF > install-config.yaml
+apiVersion: v1
+baseDomain: tnc.bootcamp.lab
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: hub
+networking:
+  # dual-stack is supported only on baremetal
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.125.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+pullSecret: '{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"}}}'
+sshKey: |
+EOF
+echo -n "  " >> install-config.yaml
+cat ~/.ssh/id_rsa.pub >> install-config.yaml
+```
+
+
+NEW:
+
+```
+apiVersion: v1alpha1
+metadata:
+  name: hub
+rendezvousIP: 192.168.125.100
+hosts:
+  - hostname: sno
+    interfaces:
+     - name: net0
+       macAddress: 52:54:00:35:bb:80
+    networkConfig:
+      interfaces:
+      - name: net0
+        state: up
+        ipv4:
+          address:
+          - ip: 192.168.125.100
+            prefix-length: 24
+          enabled: true
+          dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - 192.168.125.1
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.125.1
+            table-id: 254
+            next-hop-interface: net0
+piVersion: v1
+baseDomain: tnc.bootcamp.lab
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+metadata:
+  creationTimestamp: null
+  name: hub
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.125.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+pullSecret: '{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"}}}'
+sshKey: |
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDBvmxmoZQUn1W8buJCkBcwJVZpHS+eu5Uv6Eoy4CmYeRc01M0tpXxJ/JrTpftHVTyK6CtUmCVGT5rvPYEyv1kAxXA3Iqa+ZTa/kVSTHP9mNDoGHNX62GDJVJkyQvY678ohCoOSfjDyxcM6qhGbopThZA5nAuDLS8Dd/Fid1Qug+Yh2mxXKZK16KKkzJKEBpTHezhlGmS66VY8ZGpkEUgDxYJkyAiL/QBeCNh6zkXAkWyPZhby73hCAVaHmVa1D4NU4YNbYe9z+S9LqASCuzfz9T12q8br6gkomBJhFnDCiYbpg54e4Xt/XYE1Q49F/aBnHFyIx9XqcC5O0tU4f8V+eUgMU8rpaYIj9WKK8p3L57cg6VAlJSfaB1Xn3lqzcYokK6eVEgpnMdHZMQbmUW1WuuoL9s1DjKr3Q/66THd5ChRKbBu9y8YjDR/Pf2aWNZabWpa8bZAs84OVRJvRHF2txOtCK/1kCPHZCFBcyNOixWgw/4b6YVeJdAb5HW7w/yRB64MayYPkBWqL1BD6HLtpIpPVIhu24kxzzYCr5DgWrB61ZbTh8ztE0/zc2EcJmlBL1Fbi3k4y3TaRtRNrw0VN3TXYJa3c2qW6gsAUaciuIM1eUQDpncnfTExDFHrSnUTaefgtJsqTlorsYicLQRoF0Y6rlCS+8HX5fDD1kwQ9Rdw== 
+```
+### Create VM:
+
+```
+cat << EOF > ~/hub.yaml
+hub-m1:
+ pool: default
+ uefi: true
+ start: false
+ numcpus: 16
+ memory: 48000
+ disks: 
+ - size: 200
+ - size: 300
+ nets:
+ - name: tnc
+   nic: eth0
+   mac: 52:54:00:35:bc:20
+   ip: 192.168.125.20
+   mask: 255.255.255.0
+   gateway: 192.168.125.1
+hub-m2:
+ pool: default
+ uefi: true
+ start: false
+ numcpus: 16
+ memory: 48000
+ disks: 
+ - size: 200
+ - size: 300
+ nets:
+ - name: tnc
+   nic: eth0
+   mac: 52:54:00:35:bc:21
+   ip: 192.168.125.21
+   mask: 255.255.255.0
+   gateway: 192.168.125.1
+hub-m3:
+ pool: default
+ uefi: true
+ start: false
+ numcpus: 16
+ memory: 48000
+ disks: 
+ - size: 200
+ - size: 300
+ nets:
+ - name: tnc
+   nic: eth0
+   mac: 52:54:00:35:bc:22
+   ip: 192.168.125.22
+   mask: 255.255.255.0
+   gateway: 192.168.125.1
+EOF
+```
+```
+kcli create plan -f ~/hub.yaml 
+```
+```
+kcli list vm
++--------+--------+----------------+---------------+-----------------------+---------+
+|  Name  | Status |       Ip       |     Source    |          Plan         | Profile |
++--------+--------+----------------+---------------+-----------------------+---------+
+| hub-m1 |  down  | 192.168.125.20 |               |   suspicious-amazigh  |  kvirt  |
+| hub-m2 |  down  | 192.168.125.21 |               |   suspicious-amazigh  |  kvirt  |
+| hub-m3 |  down  | 192.168.125.22 |               |   suspicious-amazigh  |  kvirt  |
+|  vm1   |   up   | 192.168.125.10 | centos9stream | compassionate-goodall |  kvirt  |
++--------+--------+----------------+---------------+-----------------------+---------+
+```
+
