@@ -12,7 +12,9 @@ udevadm settle
 mkfs.xfs /dev/nvme3n1p1
 mkfs.xfs /dev/nvme2n1p1
 X=`lsblk  /dev/nvme3n1p1 -no UUID`
-echo "UUID=$X       /opt    xfs     auto 0       0
+echo "UUID=$X       /var/lib/containers/storage/   xfs     auto 0       0" >> /etc/fstab
+Y=`lsblk  /dev/nvme3n1p1 -no UUID`
+echo "UUID=$Y       /var/lib/libvirt   xfs     auto 0       0" >> /etc/fstab
 systemctl daemon-reload
 mount -av
 restorecon /opt
