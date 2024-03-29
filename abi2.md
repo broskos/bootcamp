@@ -162,8 +162,9 @@ Name:	quay.tnc.bootcamp.lab
 Address: 192.168.125.1
 
 ping quay.tnc.bootcamp.lab
-PING quay.tnc.bootcamp.lab (139.178.70.133) 56(84) bytes of data.
-64 bytes from hypervisor (139.178.70.133): icmp_seq=1 ttl=64 time=0.023 ms
+PING quay.tnc.bootcamp.lab (192.168.125.1) 56(84) bytes of data.
+64 bytes from hypervisor (192.168.125.1): icmp_seq=1 ttl=64 time=0.022 ms
+64 bytes from hypervisor (192.168.125.1): icmp_seq=2 ttl=64 time=0.023 ms
 ```
 
 ## Insert pull secret
