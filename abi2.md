@@ -258,7 +258,7 @@ EOF
 
 ```
 wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz
-tar -xvf tar -xvf ./openshift-install-linux-4.14.18.tar.gz
+tar -xvf ./openshift-install-linux-4.14.18.tar.gz
 rm -f openshift-install-linux-4.14.18.tar.gz
 mv openshift-install /usr/bin/
 ```
@@ -336,6 +336,7 @@ cat ~/.ssh/id_rsa.pub >> install-config.yaml
 NEW:
 
 ```
+cat << EOF > agent-config.yaml
 apiVersion: v1alpha1
 metadata:
   name: hub
@@ -365,7 +366,9 @@ hosts:
             next-hop-address: 192.168.125.1
             table-id: 254
             next-hop-interface: net0
-piVersion: v1
+EOF
+cat << EOF > install-config.yaml
+apiVersion: v1
 baseDomain: tnc.bootcamp.lab
 compute:
 - architecture: amd64
@@ -393,7 +396,9 @@ platform:
   none: {}
 pullSecret: '{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"}}}'
 sshKey: |
-  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDBvmxmoZQUn1W8buJCkBcwJVZpHS+eu5Uv6Eoy4CmYeRc01M0tpXxJ/JrTpftHVTyK6CtUmCVGT5rvPYEyv1kAxXA3Iqa+ZTa/kVSTHP9mNDoGHNX62GDJVJkyQvY678ohCoOSfjDyxcM6qhGbopThZA5nAuDLS8Dd/Fid1Qug+Yh2mxXKZK16KKkzJKEBpTHezhlGmS66VY8ZGpkEUgDxYJkyAiL/QBeCNh6zkXAkWyPZhby73hCAVaHmVa1D4NU4YNbYe9z+S9LqASCuzfz9T12q8br6gkomBJhFnDCiYbpg54e4Xt/XYE1Q49F/aBnHFyIx9XqcC5O0tU4f8V+eUgMU8rpaYIj9WKK8p3L57cg6VAlJSfaB1Xn3lqzcYokK6eVEgpnMdHZMQbmUW1WuuoL9s1DjKr3Q/66THd5ChRKbBu9y8YjDR/Pf2aWNZabWpa8bZAs84OVRJvRHF2txOtCK/1kCPHZCFBcyNOixWgw/4b6YVeJdAb5HW7w/yRB64MayYPkBWqL1BD6HLtpIpPVIhu24kxzzYCr5DgWrB61ZbTh8ztE0/zc2EcJmlBL1Fbi3k4y3TaRtRNrw0VN3TXYJa3c2qW6gsAUaciuIM1eUQDpncnfTExDFHrSnUTaefgtJsqTlorsYicLQRoF0Y6rlCS+8HX5fDD1kwQ9Rdw== 
+EOF
+echo -n "  " >> install-config.yaml
+cat ~/.ssh/id_rsa.pub >> install-config.yaml
 ```
 ### Create VM:
 
