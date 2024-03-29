@@ -6,6 +6,20 @@ dnf -y install python3.9
 ln -s /bin/pip3 /bin/pip
 ln -s /bin/python3.9 /bin/python
 
+parted -s -a optimal /dev/nvme3n1 mklabel gpt mkpart primary 0 3841GB
+parted -s -a optimal /dev/nvme2n1 mklabel gpt mkpart primary 0 3841GB 
+udevadm settle
+mkfs.xfs /dev/nvme3n1p1
+mkfs.xfs /dev/nvme2n1p1
+X=`lsblk  /dev/nvme3n1p1 -no UUID`
+echo "UUID=$X       /opt    xfs     auto 0       0
+systemctl daemon-reload
+mount -av
+restorecon /opt
+```
+
+
+```
 ###################
 # Step#2: Enable Virtualization:
 ###################
