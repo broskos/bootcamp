@@ -1,3 +1,4 @@
+```
 sudo -i
 dnf update -y
 dnf -y install python3.9
