@@ -1,4 +1,3 @@
-```
 sudo -i
 dnf update -y
 dnf -y install python3.9
@@ -144,13 +143,13 @@ vm1:
    ip: 192.168.125.10
    mask: 255.255.255.0
    gateway: 192.168.125.1
+ cmds:
+ - echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+ - ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+ - systemctl restart sshd
 EOF
 kcli create plan -f vm1.yaml 
 ```
-
-#TODO: 
-echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-systemctl restart sshd
 
 ## Checking Quay DNS entry:
 ```
