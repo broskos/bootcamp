@@ -272,7 +272,32 @@ Writing CatalogSource manifests to oc-mirror-workspace/results-1712158340
 Writing ICSP manifests to oc-mirror-workspace/results-1712158340
 ```
 
+## disconenct the bridge 
+```
+virsh net-edit  tnc
+```
+remove forwarding section 
 
+```
+virsh net-destroy tnc; virsh net-start tnc
+virsh destroy vm1; virsh start vm1
+```
+
+```
+ssh root@192.168.125.10 -- ping 192.168.125.1 -c 3
+root@192.168.125.10's password: 
+PING 192.168.125.1 (192.168.125.1) 56(84) bytes of data.
+64 bytes from 192.168.125.1: icmp_seq=1 ttl=64 time=0.081 ms
+64 bytes from 192.168.125.1: icmp_seq=2 ttl=64 time=0.068 ms
+64 bytes from 192.168.125.1: icmp_seq=3 ttl=64 time=0.076 ms
+
+ssh root@192.168.125.10 -- ping 8.8.8.8 -c 3
+root@192.168.125.10's password: 
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+From 192.168.125.1 icmp_seq=1 Destination Port Unreachable
+From 192.168.125.1 icmp_seq=2 Destination Port Unreachable
+From 192.168.125.1 icmp_seq=3 Destination Port Unreachable
+```
 # Install ABI: 
 
 ## Installer: 
