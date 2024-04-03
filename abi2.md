@@ -157,10 +157,17 @@ vm1:
  - echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
  - ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
  - systemctl restart sshd
+ - dnf install -y nmstate
 EOF
 kcli create plan -f vm1.yaml 
 ```
 
+Configure keyless ssh to VM1
+
+```
+ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/vm1
+ssh-copy-id -i ~/.ssh/vm1.pub root@192.168.125.10
+```
 ## Checking Quay DNS entry:
 ```
 nslookup quay.tnc.bootcamp.lab
