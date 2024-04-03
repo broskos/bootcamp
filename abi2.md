@@ -15,6 +15,8 @@ X=`lsblk  /dev/nvme0n1p1 -no UUID`
 echo "UUID=$X       /var/lib/containers/storage/   xfs     auto 0       0" >> /etc/fstab
 Y=`lsblk  /dev/nvme1n1p1 -no UUID`
 echo "UUID=$Y       /var/lib/libvirt   xfs     auto 0       0" >> /etc/fstab
+mkdir -p /var/lib/containers/storage/
+mkdir -p /var/lib/libvirt/
 systemctl daemon-reload
 mount -av
 restorecon /opt
