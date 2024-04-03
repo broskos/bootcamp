@@ -7,12 +7,16 @@ ln -s /bin/pip3 /bin/pip
 ln -s /bin/python3.9 /bin/python
 
 parted -s -a optimal /dev/nvme0n1 mklabel gpt mkpart primary 0 3841GB
+sleep 20
+udevadm settle
 parted -s -a optimal /dev/nvme1n1 mklabel gpt mkpart primary 0 3841GB 
+sleep 20
 udevadm settle
 mkfs.xfs /dev/nvme0n1p1
 mkfs.xfs /dev/nvme1n1p1
 X=`lsblk  /dev/nvme0n1p1 -no UUID`
 echo "UUID=$X       /var/lib/containers/storage/   xfs     auto 0       0" >> /etc/fstab
+sleep 20
 Y=`lsblk  /dev/nvme1n1p1 -no UUID`
 echo "UUID=$Y       /var/lib/libvirt   xfs     auto 0       0" >> /etc/fstab
 mkdir -p /var/lib/containers/storage/
