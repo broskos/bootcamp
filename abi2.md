@@ -19,7 +19,8 @@ mkdir -p /var/lib/containers/storage/
 mkdir -p /var/lib/libvirt/
 systemctl daemon-reload
 mount -av
-restorecon /opt
+restorecon -rF /var/lib/containers/storage/
+restorecon -rF /var/lib/libvirt/
 ```
 
 
