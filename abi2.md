@@ -211,53 +211,65 @@ mkdir ~/.docker
 mv config.json ~/.docker/
 ```
 ```
-cat <<EOF > icsp.yaml
+cat <<EOF > imageset-config.yaml
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
-archiveSize: 4
 storageConfig:
   registry:
-    imageURL: quay.tnc.bootcamp.lab:8443/ocp/oc-mirror-metadata #private quay/registry  address
-    skipTLS: true # this would downalod the openshift image service for life cycle management. 
+    imageURL: quay.tnc.bootcamp.lab:8443/ocp/oc-mirror-metadata
+    skipTLS: true
 mirror:
   platform:
     channels:
     - name: stable-4.14
       type: ocp
-      minVersion: 4.14.1
+      minVersion: 4.14.18
       maxVersion: 4.14.18
-    graph: true
   operators:
-    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
-      packages:
-      - name: cluster-logging
-        channels:
-        - name: stable
-        - name: stable-5.8
-      - name: advanced-cluster-management 
-        channels:
-        - name: release-2.10 
-      - name: local-storage-operator
-        channels:
-        - name: stable
-      - name: topology-aware-lifecycle-manager
-        channels:
-        - name: stable
-      - name: quay-operator
-        channels:
-        - name: stable-3.10
-      - name: openshift-gitops-operator
-        channels:
-        - name: latest
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
+    packages:
+    - name: cluster-logging
+      channels:
+      - name: stable-5.8
+    - name: advanced-cluster-management 
+      channels:
+      - name: release-2.10 
+    - name: local-storage-operator
+      channels:
+      - name: stable
+    - name: topology-aware-lifecycle-manager
+      channels:
+      - name: stable
+    - name: quay-operator
+      channels:
+      - name: stable-3.11
+    - name: openshift-gitops-operator
+      channels:
+      - name: latest
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
   helm: {}
 EOF
 ```
+
+```
+for X in {"cluster-logging","advanced-cluster-management","local-storage-operator","topology-aware-lifecycle-manager","quay-operator","openshift-gitops-operator"}; do oc mirror list operators --catalog=registry.redhat.io/redhat/redhat-operator-index:v4.14 --package=$X; done
+```
+
+
 ## Mirror: 
 
 ```
-./oc-mirror --config=./icsp.yaml docker://quay.tnc.bootcamp.lab:8443 --dest-skip-tls=true --source-skip-tls=true
+ oc mirror --config=./imageset-config.yaml docker://quay.tnc.bootcamp.lab:8443 --dest-skip-tls=true --source-skip-tls=true;
+```
+
+What you want to see at the end of this:  (takes about 10-15 mins)
+
+```
+Rendering catalog image "quay.tnc.bootcamp.lab:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 
+Writing image mapping to oc-mirror-workspace/results-1712158340/mapping.txt
+Writing CatalogSource manifests to oc-mirror-workspace/results-1712158340
+Writing ICSP manifests to oc-mirror-workspace/results-1712158340
 ```
 
 
