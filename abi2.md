@@ -205,15 +205,22 @@ podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .d
 
 Push this file to VM: 
 ```
-scp .docker/config.json root@192.168.125.10:~/
+scp .docker/config.json root@192.168.126.10:~/
 ```
 ```
-ssh root@192.168.125.10
+ssh root@192.168.126.10
 ```
 ```
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-client-linux-4.14.18.tar.gz -o openshift-client-linux-4.14.18.tar.gz
+tar -xvf openshift-client-linux-4.14.18.tar.gz 
+mv oc /usr/bin/
+rm -f openshift-client-linux-4.14.18.tar.gz 
+oc completion bash > oc.bash_completion
+mv oc.bash_completion /etc/bash_completion.d/
 curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/oc-mirror.tar.gz -o oc-mirror.tar.gz
 tar -xvf oc-mirror.tar.gz 
 chmod u+x oc-mirror
+mv oc-mirror /usr/bin
 mkdir ~/.docker
 mv config.json ~/.docker/
 ```
@@ -237,7 +244,7 @@ mirror:
     packages:
     - name: cluster-logging
       channels:
-      - name: stable-5.8
+      - name: stable-5.9
     - name: advanced-cluster-management 
       channels:
       - name: release-2.10 
@@ -310,7 +317,7 @@ From 192.168.125.1 icmp_seq=3 Destination Port Unreachable
 ## Installer: 
 
 ```
-wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz -o openshift-install-linux-4.14.18.tar.gz
 tar -xvf ./openshift-install-linux-4.14.18.tar.gz
 rm -f openshift-install-linux-4.14.18.tar.gz
 mv openshift-install /usr/bin/
@@ -323,6 +330,8 @@ mv openshift-install /usr/bin/
 NEW:
 
 ```
+mkdir ~/abi 
+cd ~/abi
 cat << EOF > agent-config.yaml
 apiVersion: v1alpha1
 metadata:
@@ -366,7 +375,7 @@ controlPlane:
   architecture: amd64
   hyperthreading: Enabled
   name: master
-  replicas: 3
+  replicas: 1
 metadata:
   creationTimestamp: null
   name: hub
@@ -381,7 +390,7 @@ networking:
   - 172.30.0.0/16
 platform:
   none: {}
-pullSecret: '{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfZGE0OWY3MDcwODlhNDU0Y2E1NzdiMzJlMTdmMjExODM6MU82R0tFTUtIMlRVNFAyM1FEQlM2TU9LTkk1MVQ4RzlKTVZZM0dDWkxDSEpLOUUwNzQ4Q0tNOVJWNTlMVDk2Ug==","email":"shassan@redhat.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTViYzY4YjVhLWU2NmMtNGMxMS1iZDY4LWVkMGI3NjQyZTJmZjpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTJOakUzWldOak16UmpZakEwT0RZNVlXVXdNR00yWkRVeFl6TTBOVEExTlNKOS5RN0FhdERxTmxCOS1vSFBJa0hjWFZJUnhrMnBIOUtQYW11eFRhVDM3ekVZWUpVWFhoek1sTF9zX3ZhVVBzd2lQcXlWVTR6T1JfT3NrZ19lV3dRaEZsU2h5SkVqeDloaVpsdUQyZ2duNS1ueG1sUk5DcFZ2RTJ0YWVkOERJeVNKZEhGa3FSZ3FBRmJGOVJQS1NQUGtHc1R6cHBfT25xYTMxQmgwX1RxTDJ1S1FES1ZHUmFpaHFBanRmbEhMTUIxb3p6UnRfaWRfbFg0TGhtZjNBRE9VYl9XdHR3cXkyRTdaajA5RWdBTHoxZVU5cDEwNlJiSTJOQWMyVGxnR2k3U3BZcVFTUm85YlB3MVpXZVgwN2RHa1ctdy1Kd1lrRTRESzJBNzVwakdRN2xDcGM1ejVFMXZTYldPU3VXMjBNcW1xREpMeGVxN2xSMDBXaktwa2lPNmVrcURENERPYmhORG1mNjNNejg4M3NKaloyQ2c1c0lwSUVVbzRFcGdobFNZUllyZ1dUR2dCQWJuRXpwOHhOcm1jZktKUmRzb2E0NmtOZkhsdXBBeEZuNUJHZ2pkRVlLc2VLNEVySlZVTW9WZnRKeWc3N1FTN1gxdXZLX2EyOW9TM1ltZnBEWnpsOFRYRWlCOWFTdF9NaU9oZGtILVRBVXo5bThwaUszVm50TFJ5ZnVQZGlDcThDalJHZTVJQ0FQYlNKTHBvRFVPbGNwMjl3RHZ1V19KVDNXMXFOMzZLZ28xczdFemQtUGhHWG0tdTlfeExQc0F6Q3JvT20zZmpwbG5idC11MEpEMlM0ZTdUQjZVQnozNWZaVFJPeHhfcTZuc0tKNG40MFFvbFdWem16ZHJoUHRZM3JwRWJSQ3k1ckJvcWw1YWN0ejBLMmRzdFFKMkMxVnR2dTNRTQ==","email":"shassan@redhat.com"}}}'
+pullSecret: '{"auths":{"quay.tnc.bootcamp.lab:8443":{"auth":"cXVheTpzeWVkQHRuYw=="}}}'
 sshKey: |
 EOF
 echo -n "  " >> install-config.yaml
