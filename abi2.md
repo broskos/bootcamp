@@ -595,6 +595,66 @@ To verify that the mounting was successful, exit the VM, and verify by running t
 
 This command shows the availble boot sources for the vm called `hub`. As you can see, the ISO file is listed amount those sources. Its not the first source, but since the other sources don't contain any boot image, its safe to leave the boot operation as-is. (in a production deployment, the boot sequence should be changed to avoid any confusion due to some preexisting image on the local disks)
 
+# TODO:
+- add GUI for start and monitor of install
+- show progrsss (use belwo) via client
+- show oc get nodes 
+- Check status of ICSP and CS ...add operators
+
+## Perform and Monitor the Installation:
+
+
+### Monitor install progress: 
+
+Once the VM is started, use the following commnad (from inside the Bastion VM, run from the ~/abi/ directory) to monitor progress:
+
+```
+openshift-install agent wait-for bootstrap-complete --log-debug=debug
+```
+The output will end with the following:
+```
+INFO Host: sno, reached installation stage Writing image to disk: 6% 
+INFO Host: sno, reached installation stage Writing image to disk: 20% 
+INFO Host: sno, reached installation stage Writing image to disk: 27% 
+INFO Host: sno, reached installation stage Writing image to disk: 41% 
+INFO Host: sno, reached installation stage Writing image to disk: 48% 
+INFO Host: sno, reached installation stage Writing image to disk: 57% 
+INFO Host: sno, reached installation stage Writing image to disk: 67% 
+INFO Host: sno, reached installation stage Writing image to disk: 78% 
+INFO Host: sno, reached installation stage Writing image to disk: 84% 
+INFO Host: sno, reached installation stage Writing image to disk: 90% 
+INFO Host: sno, reached installation stage Writing image to disk: 100% 
+INFO Bootstrap configMap status is complete       
+INFO cluster bootstrap is complete  
+```
+
+
+
+
+
+
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+=======
+==============
+=======
+=======
+=======
+
+
+
 
 
 
@@ -1076,5 +1136,4 @@ virsh dumpxml hub-m1 | grep source
       <source file='/var/lib/libvirt/images/agent.x86_64.iso'/>
       <source network='tnc'/>
 ```
-
 
