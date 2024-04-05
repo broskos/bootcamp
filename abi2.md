@@ -1,8 +1,10 @@
 ```
 sudo -i
 dnf update -y
-dnf -y install python3.9
-# set python stuff (path seem to be needed in RHEL8)
+# install python and cockpit (for VM console later)
+dnf -y install python3.9 cockpit cockpit-machines
+systemctl enable --now cockpit.socket
+# set python stuff (path needed in RHEL8)
 ln -s /bin/pip3 /bin/pip
 ln -s /bin/python3.9 /bin/python
 
@@ -75,10 +77,11 @@ systemctl is-active ksushy
 ###################
 # Step#7: Create Local Net:
 ###################
-# Need to do this before restarting NetworkManager, or else DNS fails as there isn't any 192.168.125.1 existing 
-# create cluster: 
-kcli create pool -p /var/lib/libvirt/images default 
-kcli create network -c 192.168.125.0/24 -P dhcp=false --domain tnc.bootcamp.lab tnc
+# Need to do this before restarting NetworkManager, or else DNS fails as there isn't any 192.168.125.1 existing
+# create cluster:
+kcli create pool -p /var/lib/libvirt/images default
+kcli create network -c 192.168.125.0/24 -P forward_mode=route -P dhcp=false --domain tnc.bootcamp.lab tnc
+kcli create network -c 192.168.126.0/24 -P dhcp=false --domain tnc.bootcamp.lab tnc-connected
 
 ###################
 # Step#8: DNS and SSH:
@@ -118,7 +121,7 @@ systemctl is-active NetworkManager
 ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
 
 ###################
-# Step#9: Install OC Client & Mirror
+# Step#9: Install OC Client 
 ###################
 wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-client-linux-4.14.18.tar.gz
 tar -xvf openshift-client-linux-4.14.18.tar.gz 
@@ -126,10 +129,495 @@ mv oc /usr/bin/
 rm -f openshift-client-linux-4.14.18.tar.gz 
 oc completion bash > oc.bash_completion
 mv oc.bash_completion /etc/bash_completion.d/
+```
+
+## Create and configure needed VMs: 
+
+### Configure and Bringup Bastion VM:
+
+```
+###################
+# Step#10: Configure, and Bring up VM for mirroring
+###################
+cat << EOF > bastion.yaml
+bastion:
+ pool: default
+ rootpassword: redhat
+ image: centos9stream
+ numcpus: 6
+ memory: 16000
+ files:
+ - path: /etc/motd
+   content: Welcome to the cruel world
+ nets:
+ - name: tnc
+   nic: eth0
+   ip: 192.168.125.10
+   mask: 255.255.255.0
+   gateway: 192.168.125.1
+ - name: tnc-connected
+   nic: eth1
+   ip: 192.168.126.10
+   mask: 255.255.255.0
+   gateway: 192.168.126.1
+ cmds:
+ - ## todo: shut eth0?
+ - echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+ - ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+ - systemctl restart sshd
+ - dnf install -y podman bind-utils nmstate httpd
+ - systemctl enable --now cockpit.socket
+EOF
+```
+
+Start the VM:
+
+```
+kcli create plan -f bastion.yaml
+```
+
+Verify if the VM has been created and is up:
+
+```
+kcli list vm
++---------+--------+----------------+---------------+----------------+---------+
+|   Name  | Status |       Ip       |     Source    |      Plan      | Profile |
++---------+--------+----------------+---------------+----------------+---------+
+| bastion |   up   | 192.168.125.10 | centos9stream | romantic-goiko |  kvirt  |
++---------+--------+----------------+---------------+----------------+---------+
+```
+
+### Configure Password-less SSH for Bastion access:
+```
+ssh-copy-id root@192.168.125.10 -f
+echo "IdentityFile /root/.ssh/id_rsa" >> ~/.ssh/config
+```
+### Create VM for Cluster: 
+
+```
+cat << EOF > ~/hub.yaml
+hub:
+ pool: default
+ uefi: true
+ start: false
+ numcpus: 16
+ memory: 48000
+ disks:
+ - size: 200
+ - size: 300
+ nets:
+ - name: tnc
+   nic: eth0
+   mac: 52:54:00:35:bb:80
+   ip: 192.168.125.100
+   mask: 255.255.255.0
+   gateway: 192.168.125.1
+EOF
+kcli create plan -f hub.yaml
+```
+
+## Creating the Mirror registry:
+
+The mirror registry can be any Any Docker v2.2 compliant registry. Some examples include Red Hat Quay, JFrog Artifactory, Harbor etc. More information can be found [here](https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-installation-images.html#installation-about-mirror-registry_installing-mirroring-installation-images). 
+
+**Note** OpenShift's built-in image registry can't be used for this purpose due to its limition of not being able to not being able to push images without tag
+
+We will use the Red Hat Quay as mirror registry. The installation of this involves the following requirements:
+* configuring a pull secret. This is needed to pull the registry images from Red Hat. We will take care of this in upcoming section
+* 2 or more vCPU & 8GB of RAM. 
+* FQDN already defined for the Quay registry. This was taken care of by the earlier step where DNS was configured. 
+* About 12GB for the OCP 14 images. If including all operators, this may require upto 358GB. This is taken care by allocating a large disk partition to `/var/lib/containers/storage/` in the initial configurations we did. 
+
+More details about the requirements and other steps can be found [here](https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html)
+
+### Pull Secret:
+
+```
+###################
+# Step#11_a: Mirroring - Add Pull Secret
+###################
+mkdir ~..docker
+echo "{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfODNhNDU4ZTJmMzRjNGIzYWE0NjliYjM1NThlM2RkZDg6U1A5VDZPRTZERFQ4RVhISlBBNjgyVFVXODdEVlUzRk5EQjYyMUU0NDUzOFdFTDNWVlpTRUU2SEdOVjZVWFFRTg==","email":"farzeesoft@yahoo.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfODNhNDU4ZTJmMzRjNGIzYWE0NjliYjM1NThlM2RkZDg6U1A5VDZPRTZERFQ4RVhISlBBNjgyVFVXODdEVlUzRk5EQjYyMUU0NDUzOFdFTDNWVlpTRUU2SEdOVjZVWFFRTg==","email":"farzeesoft@yahoo.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTlhMGNjZDFhLTE3OWEtNDg3Ny05NmZhLTMzN2U4M2Y0YzZjZDpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTRaV1ExTm1ZNU1Ua3daV1EwTmpNM09XUTJaV1U1WkRRME5XTTBNalV6WkNKOS53c2kwYlNuR25oVnhjOWswaS1wX3ZMaUtUT0F4cWNBUzZKNXEwekhVRUIzSERPQmlwR0VRcC0tMU9JZmxNNEtFWGxQZktrRDQ5SnRJTmh6X0ZGcllqeHpzeWlnSkxMa0ktOFBicjlZRkVzNVNkVVJUb2lnMThzb0lLb2pLSkZHYVNOS0kzUkpzY1pxdDZEdktvRC1jOGJqRjQ4QUJIMVZHc1VPQXN1d01aSVpfZ1ZUOFE2SGFjXzBaMEZlQTQ5bnFhVW51eUpmRjFyU0pKdjhNcmwybWpVRWxpd1EzSGpNWWtfSFZFNDBpUmpOT204eVYxOVpUY09pTEhCTXcyU2NpSnJEaUVlYW1jSEpBRVY5OEJtM1o3eFlVaG4zMHdBRE52eS15UHZZQ0lrV1A5c3lCQUxsZ0FpeEJJYmVrd3RWeGZOZEFrUVFQcHF3enRZNEFZempET3k0X01PTzFtSDNkSDBTQnpQTmI0aEROeFRyY0dVRW5XTUxCb05vMFB0YlpndmIyT09TVTFDSzUzSTRRVy1DdXY0NjMwdURRNDVvbi1KYkVCQnVnWXlJc3Q0dV9Ec0VSN0VfRmgyTW5kSHktRG1GT182V3JLQnc2ZFNlMkRaSTBqWmRzcFRMYTBvZkx3Ykd1dHdRaFI0SWJjTHZpWVNiWVNtMzM0Qnh6aHNhT3ZWRnlCSFNXSzhVYXNkTnJDSHF0VF92WnhCeElsNUpPZk9zaFducDJacEZ3SDRnMmpFbVFIVGIxcVlORldQUGhZa1lYOEhMNHJmZ0IyYmZtWmdtUTFMZVQ1Y0x4WFZkN01xNnZNbUNOeV9WN01hUWhqSzVyX2lDZElwdl9IankyYjE1aVRJQXg4RlJQcl9QZ2VEeGRFRzNnMnZKUm96aHdwNVlwRzg1NWRRTQ==","email":"farzeesoft@yahoo.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTlhMGNjZDFhLTE3OWEtNDg3Ny05NmZhLTMzN2U4M2Y0YzZjZDpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTRaV1ExTm1ZNU1Ua3daV1EwTmpNM09XUTJaV1U1WkRRME5XTTBNalV6WkNKOS53c2kwYlNuR25oVnhjOWswaS1wX3ZMaUtUT0F4cWNBUzZKNXEwekhVRUIzSERPQmlwR0VRcC0tMU9JZmxNNEtFWGxQZktrRDQ5SnRJTmh6X0ZGcllqeHpzeWlnSkxMa0ktOFBicjlZRkVzNVNkVVJUb2lnMThzb0lLb2pLSkZHYVNOS0kzUkpzY1pxdDZEdktvRC1jOGJqRjQ4QUJIMVZHc1VPQXN1d01aSVpfZ1ZUOFE2SGFjXzBaMEZlQTQ5bnFhVW51eUpmRjFyU0pKdjhNcmwybWpVRWxpd1EzSGpNWWtfSFZFNDBpUmpOT204eVYxOVpUY09pTEhCTXcyU2NpSnJEaUVlYW1jSEpBRVY5OEJtM1o3eFlVaG4zMHdBRE52eS15UHZZQ0lrV1A5c3lCQUxsZ0FpeEJJYmVrd3RWeGZOZEFrUVFQcHF3enRZNEFZempET3k0X01PTzFtSDNkSDBTQnpQTmI0aEROeFRyY0dVRW5XTUxCb05vMFB0YlpndmIyT09TVTFDSzUzSTRRVy1DdXY0NjMwdURRNDVvbi1KYkVCQnVnWXlJc3Q0dV9Ec0VSN0VfRmgyTW5kSHktRG1GT182V3JLQnc2ZFNlMkRaSTBqWmRzcFRMYTBvZkx3Ykd1dHdRaFI0SWJjTHZpWVNiWVNtMzM0Qnh6aHNhT3ZWRnlCSFNXSzhVYXNkTnJDSHF0VF92WnhCeElsNUpPZk9zaFducDJacEZ3SDRnMmpFbVFIVGIxcVlORldQUGhZa1lYOEhMNHJmZ0IyYmZtWmdtUTFMZVQ1Y0x4WFZkN01xNnZNbUNOeV9WN01hUWhqSzVyX2lDZElwdl9IankyYjE1aVRJQXg4RlJQcl9QZ2VEeGRFRzNnMnZKUm96aHdwNVlwRzg1NWRRTQ==","email":"farzeesoft@yahoo.com"}}}" > ~/.docker/config.json
+```
+### Install the Mirror Registry: 
+
+First, download the installer using the following: 
+
+```
 wget https://github.com/quay/mirror-registry/releases/download/v1.3.10/mirror-registry-online.tar.gz
 tar -xvf mirror-registry-online.tar.gz
 chmod u+x mirror-registry
 ```
+Run the installer: 
+
+```
+###################
+# Step#11_b: Installing Mirror Registry
+###################
+./mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@tnc
+```
+
+The insaller shall create a few pods for the mirror registry, and end with the following lines: 
+
+```
+INFO[2024-04-05 13:06:26] Quay installed successfully, config data is stored in /opt/
+INFO[2024-04-05 13:06:26] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@tnc)
+```
+
+To furhter verify if the installation is successful, check the pods it must have created: 
+```
+podman ps
+CONTAINER ID  IMAGE                                                    COMMAND         CREATED         STATUS         PORTS                   NAMES
+6da068577f02  registry.access.redhat.com/ubi8/pause:8.7-6              infinity        12 minutes ago  Up 12 minutes  0.0.0.0:8443->8443/tcp  2ee3e8b0d965-infra
+321acd27dc91  registry.redhat.io/rhel8/postgresql-10:1-203.1669834630  run-postgresql  12 minutes ago  Up 12 minutes  0.0.0.0:8443->8443/tcp  quay-postgres
+6494e91da547  registry.redhat.io/rhel8/redis-6:1-92.1669834635         run-redis       11 minutes ago  Up 11 minutes  0.0.0.0:8443->8443/tcp  quay-redis
+2ab76abfdb27  registry.redhat.io/quay/quay-rhel8:v3.8.14               registry        11 minutes ago  Up 11 minutes  0.0.0.0:8443->8443/tcp  quay-app
+```
+### Add Registry Credentials:
+
+To add the newly deployed registry credentials in your locally saved pull secret (by default, its `~/.docker/config.json`), use the following: 
+```
+###################
+# Step#11_c: Adding Mirror Registry Secret
+###################
+podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .docker/config.json
+```
+
+Then login as shown here: (using password `syed@tnc`)
+```
+Username: quay
+Password: <<<< syed@tnc
+Login Succeeded!
+```
+## Preparing the Bastion VM:
+
+The Bastion VM was already brought up. To make it useful, few tools will need to be installed on it. 
+
+### Copying pull secret & Quay cert to Bastion VM:
+
+```
+###################
+# Step#12_a: Adding Pull Secret & Quay Cert to Bastion
+###################
+scp .docker/config.json root@192.168.126.10:~/
+scp /opt/quay-rootCA/rootCA.pem root@192.168.125.10:~/
+```
+The rest of the configuration will be done from inside the VM. You can connect to it using the following: 
+```
+virsh console bastion
+```
+
+### Installing OpenShift Client, Installer  and Mirror Plugin
+
+To perform the mirroring to the registry, the `oc mirror` command will be used. This requires installation of `openshift client` as well as `mirroring pluging` for the openshift client. 
+Additionally, to build the ISO image for Agent Based Installer, the `openshift-install` binary is needed. 
+
+The following steps install all three of these items:
+
+```
+###################
+# Step#12_b: Installing OpenShift Client, Installer  and Mirror Plugin
+###################
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-client-linux-4.14.18.tar.gz -o openshift-client-linux-4.14.18.tar.gz
+tar -xvf openshift-client-linux-4.14.18.tar.gz
+mv oc /usr/bin/
+rm -f openshift-client-linux-4.14.18.tar.gz
+oc completion bash > oc.bash_completion
+mv oc.bash_completion /etc/bash_completion.d/
+#
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/oc-mirror.tar.gz -o oc-mirror.tar.gz
+tar -xvf oc-mirror.tar.gz
+chmod u+x oc-mirror
+#
+curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-install-linux-4.14.18.tar.gz -o openshift-install-linux-4.14.18.tar.gz
+tar -xvf ./openshift-install-linux-4.14.18.tar.gz
+rm -f openshift-install-linux-4.14.18.tar.gz
+mv openshift-install /usr/bin/
+#
+mv oc-mirror /usr/bin
+mkdir ~/.docker
+mv config.json ~/.docker/
+```
+## Performing the Mirroring:
+
+For the mirroring process, we will need to first identify which images we want to mirror to the registry. This is done using `imageSetConfiguration`.  Use the following snippet to create this manifest, in which only 4.14.18 images are being identified, in addition to the apprprpriate versions of the operators we will need: 
+
+```
+cat <<EOF > imageset-config.yaml
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+storageConfig:
+  registry:
+    imageURL: quay.tnc.bootcamp.lab:8443/ocp/oc-mirror-metadata
+    skipTLS: true
+mirror:
+  platform:
+    channels:
+    - name: stable-4.14
+      type: ocp
+      minVersion: 4.14.18
+      maxVersion: 4.14.18
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
+    packages:
+    - name: cluster-logging
+      channels:
+      - name: stable-5.9
+    - name: advanced-cluster-management
+      channels:
+      - name: release-2.10
+    - name: local-storage-operator
+      channels:
+      - name: stable
+    - name: topology-aware-lifecycle-manager
+      channels:
+      - name: stable
+    - name: quay-operator
+      channels:
+      - name: stable-3.11
+    - name: openshift-gitops-operator
+      channels:
+      - name: latest
+  additionalImages:
+  - name: registry.redhat.io/ubi8/ubi:latest
+  helm: {}
+EOF
+```
+
+Note that the `default` channel of the operators always need to be included. In the above manifest, we have ensured to always include the default (also happens to be latest in the current case, but doesn't have to be). This is true at the time of creating these instructions, but may change over time. To find out the available channel versions and default channel version, the following snippet would be handy: 
+
+```
+for X in {"cluster-logging","advanced-cluster-management","local-storage-operator","topology-aware-lifecycle-manager","quay-operator","openshift-gitops-operator"}; do oc mirror list operators --catalog=registry.redhat.io/redhat/redhat-operator-index:v4.14 --package=$X; done
+```
+
+### Mirroring:
+Now the stage is set to start the mirroring process. Use the following command to start that: 
+```
+oc mirror --config=./imageset-config.yaml docker://quay.tnc.bootcamp.lab:8443 --dest-skip-tls=true --source-skip-tls=true
+```
+
+The output will look like the following: 
+```
+Logging to .oc-mirror.log
+Checking push permissions for quay.tnc.bootcamp.lab:8443
+Creating directory: oc-mirror-workspace/src/publish
+Creating directory: oc-mirror-workspace/src/v2
+Creating directory: oc-mirror-workspace/src/charts
+Creating directory: oc-mirror-workspace/src/release-signatures
+No metadata detected, creating new workspace
+wrote mirroring manifests to oc-mirror-workspace/operators.1712338271/manifests-redhat-operator-index
+
+To upload local images to a registry, run:
+
+        oc adm catalog mirror file://redhat/redhat-operator-index:v4.14 REGISTRY/REPOSITORY
+<<SNIP>>
+info: Mirroring completed in 4m3.52s (176.5MB/s)
+Rendering catalog image "quay.tnc.bootcamp.lab:8443/redhat/redhat-operator-index:v4.14" with file-based catalog
+Writing image mapping to oc-mirror-workspace/results-1712338799/mapping.txt
+Writing CatalogSource manifests to oc-mirror-workspace/results-1712338799
+Writing ICSP manifests to oc-mirror-workspace/results-1712338799
+Fri Apr  5 01:40:18 PM EDT 2024
+[root@bastion ~]#
+
+```
+
+**NOTE** Takes almost 10 mins (not 4). If it fails, re-run
+
+## Disconnected Environment: 
+
+At this point all the tasks that require internet access for Bastion node are completed. We can go ahead and disconect it completely from the internet, using the following: 
+
+```
+nmcli con down "System eth1"
+```
+
+Check to ensure that DNS can still be reached: 
+```
+nslookup quay.tnc.bootcamp.lab
+Server:         192.168.125.1
+Address:        192.168.125.1#53
+
+Name:   quay.tnc.bootcamp.lab
+Address: 192.168.125.1
+```
+
+## Creating the Agent Installer manifests: 
+
+There are two manifests required by Agent Instaler. Those will be created now. 
+
+### Creating Install-Config:
+
+```
+cat << EOF > install-config.yaml
+apiVersion: v1
+baseDomain: tnc.bootcamp.lab
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: hub
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.125.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+pullSecret: '{"auths":{"quay.tnc.bootcamp.lab:8443":{"auth":"cXVheTpzeWVkQHRuYw=="}}}'
+sshKey: |
+EOF
+```
+
+Note that the pull secret here is for the locally created mirror registry. We don't need the pull secret to reach redhat.com any more. 
+
+Add the ssh key to be able to access the deployed clsuter node (if needed at some point for debugging):
+
+```
+echo -n "  " >> install-config.yaml
+cat ~/.ssh/id_rsa.pub >> install-config.yaml
+```
+
+Since this is a disconnected environment, the public urls need to be `mapped` to the local registry. This is done through use of `imageContentSourcePolicy`. The manifest for this was already created by the `oc mirror` commmand, and saved in the `~/oc-mirror-workspace/results-X` directory (X is an encoded number). Since our cluster is not yet deployed, we can't apply this manifest to it (the information will be needed at the time of deployment). So this information is plugged into the `install-config.yaml` instead. The following will extract the information from the yaml manifest and save it to a local file called `mirror` :
+
+```
+cat ~/oc-mirror-workspace/$(ls ~/oc-mirror-workspace/ | grep result)/imageContentSourcePolicy.yaml | grep -A2 mirrors: | grep -v "\-\-" | sed 's/^  //g' > mirrors
+```
+
+You can inspect this file to understand the information bettter. Now lets go ahead and push this information into the `install-config.yaml` file: 
+
+```
+echo "imageContentSources:" >> install-config.yaml
+cat mirrors >> install-config.yaml
+```
+
+Another thing needed to access the local registry is the certificate for accessing Quay. This was created at the time when Quay was deployed, and saved on the host device's `/opt/quay/` directory. In a previous step, we had copied over that file to the home directory of the VM, so now all thats needed is to plug that information into the install-config.yaml: 
+
+```
+echo "additionalTrustBundle: |" >> install-config.yaml
+cat ~/rootCA.pem | sed 's/^/  /g' >> install-config.yaml
+```
+
+### Creating Agent-Config manifest:
+
+The second manifest needed by the installer is `agent-config.yaml`. It will be created using the following: 
+
+```
+cat << EOF > agent-config.yaml
+apiVersion: v1alpha1
+metadata:
+  name: hub
+rendezvousIP: 192.168.125.100
+hosts:
+  - hostname: sno
+    interfaces:
+     - name: eth0
+       macAddress: 52:54:00:35:bb:80
+    networkConfig:
+      interfaces:
+      - name: eth0
+        state: up
+        ipv4:
+          address:
+          - ip: 192.168.125.100
+            prefix-length: 24
+          enabled: true
+          dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - 192.168.125.1
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.125.1
+            table-id: 254
+            next-hop-interface: eth0
+EOF
+```
+## Creating & Mounting the ISO file:
+
+All the pieces are ready to start the building of ISO file. Use the following command for that: 
+
+**NOTE** This process removes the two manifests we created earlier. IF those have to be preserved for future observation, make a copy of those at some other location. 
+
+```
+cd ~/abi
+openshift-install agent create image --dir=./ --log-level=debug
+```
+
+The logs will end with the following: 
+```
+DEBUG   Reusing previously-fetched ClusterDeployment Config
+DEBUG Generating Kubeconfig Admin Client...
+DEBUG Fetching Kubeadmin Password...
+DEBUG Reusing previously-fetched Kubeadmin Password
+```
+An ISO would now have been created. We can go ahead and copy that to the default home directory for the HTTP server, and also enable the HTTP server to start listening on the default http port: 
+
+```
+cp agent.x86_64.iso /var/www/html/
+systemctl enable httpd --now
+sleep 10
+systemctl is-active httpd
+# should show "active"
+```
+
+You can now go ahead and mount this ISO the the VM (called `hub`) that was created in an earlier step: 
+
+```
+curl -d '{"Image":"http:/192.168.125.10/agent.x86_64.iso","Inserted": true}' -H "Content-Type: application/json" -X POST -k https://192.168.125.1:9000/redfish/v1/Managers/local/hub/VirtualMedia/Cd/Actions/VirtualMedia.InsertMedia
+```
+
+This command calls the sushy api (installed during host buildup, and listening on port 9000). 
+
+To verify that the mounting was successful, exit the VM, and verify by running the following command on the host machine: 
+
+```
+[root@hypervisor ~]# virsh dumpxml hub | grep source
+      <source file='/var/lib/libvirt/images/hub_0.img'/>
+      <source file='/var/lib/libvirt/images/hub_1.img'/>
+      <source file='/var/lib/libvirt/images/agent.x86_64.iso'/>
+      <source network='tnc'/>
+[root@hypervisor ~]#
+```
+
+This command shows the availble boot sources for the vm called `hub`. As you can see, the ISO file is listed amount those sources. Its not the first source, but since the other sources don't contain any boot image, its safe to leave the boot operation as-is. (in a production deployment, the boot sequence should be changed to avoid any confusion due to some preexisting image on the local disks)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD ================
 
 ## Bring up VM:
 
