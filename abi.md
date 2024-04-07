@@ -1,9 +1,34 @@
+
+ [[_TOC_]]
+
+ [TOC]
+
+ [- red text -]
+[+ green text +]
+```math
+a^2+b^2=c^2
+```
+$`a^2+b^2=c^2
+adsfdf
+adsfdf
+`$ 
+
 # ToDo:
 Work in Progress...
 
-```
+>>>
++---------+--------+-----------------+---------------+------------------+---------+
+|   Name  | Status |        Ip       |     Source    |       Plan       | Profile |
++---------+--------+-----------------+---------------+------------------+---------+
+| bastion |   up   |  192.168.125.10 | centos9stream | agitated-federer |  kvirt  |
+|   hub   |  down  | 192.168.125.100 |               |   angry-wright   |  kvirt  |
++---------+--------+-----------------+---------------+------------------+---------+
+>>>
+
+
+>>>
 kcli create vm -P start=False -P uefi_legacy=true -P plan=hub -P memory=24000 -P numcpus=12 -P disks=[200,200] -P nets=['{"name": "5gdeploymentlab", "mac": "52:54:00:35:aa:80"}'] -P uuid=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa9901 -P name=abinode
-```
+>>>
 
 
 ```
