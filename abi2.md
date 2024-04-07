@@ -1,3 +1,5 @@
+[TOC]
+
 ```
 sudo -i
 dnf update -y
