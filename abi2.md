@@ -4,13 +4,21 @@
 
 This lab guide uses a bare metal server to demonstrate the deployment of a fully disconnected clsuter using Agent Based Installer (ABI) methodology. 
 The lab involves the following steps. 
-1. Parepare the hoest environemnt. This installs the applications needed, and disk partitions for performing the main lab tasks. 
-2. 
+1. Parepare the host environemnt. This installs the applications needed, and disk partitions for performing the main lab tasks. 
+2. Create the networking environment for the environment
+3. Create the Vritual Machines to emulate Bastion and Cluster Node(s)
+- Installing the mirror-registry 
+- Mirroring Openshift image and operators to the local image registry 
+- Genering an ISO file and booting the OpenShift Node(s) with the ISO
 
 ## Prepare the host server: 
 The lab uses m3.large.x86 metal server from Equinix. This can be requested through [RHDP](https://demo.redhat.com/catalog?search=equinix+metal+baremetal+blank)
+Use the following to set up the server: 
 
 ```
+###################
+# Step#1: Basic Config, Add-ons and Disk Partitiions:
+###################
 sudo -i
 dnf update -y
 # install python and cockpit (for VM console later)
@@ -39,10 +47,10 @@ systemctl daemon-reload
 mount -av
 restorecon -rF /var/lib/containers/storage/
 restorecon -rF /var/lib/libvirt/
-```
-
-
-```
+sleep 20
+########### set up SSH:
+ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+sleep 10
 ###################
 # Step#2: Enable Virtualization:
 ###################
@@ -52,20 +60,21 @@ usermod -aG qemu,libvirt $(id -un)
 newgrp libvirt
 systemctl enable libvirtd --now
 sleep 10
-# verify: systemctl status libvirtd
+# verify: systemctl status libvirtd. Output should show that its active. 
 systemctl is-active libvirtd # should show active
-
+sleep 10
+#
 ###################
-# Step#3: KCLI:
+# Step#3: Install KCLI Tool to manage virtual environment
 ###################
 dnf -y copr enable karmab/kcli
 dnf -y install kcli bash-completion vim jq tar git ipcalc python3-pip
-
+#
 ###################
-# Step#4: Install Tools:
+# Step#4: Install other tools:
 ###################
 dnf -y install podman httpd-tools runc wget nmstate containernetworking-plugins bind-utils
-
+#
 ###################
 # Step#5: Disable Firewall:
 ###################
@@ -74,9 +83,15 @@ systemctl stop firewalld iptables
 iptables -F
 sleep 30
 systemctl restart libvirtd
+```
 
+### Installing Ksushy for Redfish API usage: 
+
+The basic tools are installed at this point. Next we will install the Ksushy tool, as it allows use of Redfish APIs to manage the state of the VMs. This will primarily be used to mount the bootable media using Redfish API calls later. 
+
+```
 ###################
-# Step#6: Enable KShushy:
+# Step#6: Enable KShushy, to use Redfish API for VM management:
 ###################
 pip3 install cherrypy 
 pip install -U pip setuptools 
@@ -85,7 +100,17 @@ kcli create sushy-service --ssl --port 9000
 systemctl enable ksushy --now
 sleep 10
 systemctl is-active ksushy
+```
+## Creating Networking:
 
+### Creating Virtual Network Bridges: 
+The virual environment will comprise a virtual machine that will act as our jumphost server (or Bastion, as its commonly called), and one or more VMs that will be used to install the OpenShift Cluster. 
+
+The VM(s) for OpenShift cluster have to be fully disconencted from the internet. Hence they will require their own network. In a real world, that may ba L2/L3 VPN (typically L2 vpn, as its same subnet). In the lab, we will emulate this by creating a virtal bridge called `tnc` 
+
+The Bastion VM will also need connectivity to this L2 bridge, to be able to communicate with the server, make API calls etc. But the Bastion server will also need access to the internet to be able to download installation images etc. So it will connect to `tnc` bridge, as well as another bridge called `tnc-connected` that can reach internet by using NAT. 
+
+```
 ###################
 # Step#7: Create Local Net:
 ###################
@@ -94,13 +119,16 @@ systemctl is-active ksushy
 kcli create pool -p /var/lib/libvirt/images default
 kcli create network -c 192.168.125.0/24 -P forward_mode=route -P dhcp=false --domain tnc.bootcamp.lab tnc
 kcli create network -c 192.168.126.0/24 -P dhcp=false --domain tnc.bootcamp.lab tnc-connected
+```
 
+### Creating DNS Service: 
+
+DNS service is a pre-requisite for cluster deployment and usage. The service can run anywhere that is reachable by the cluster (as well as by Bastion). The best place to set up this service in the lab environment is on the host operating system. This is done using the following: 
+
+```
 ###################
-# Step#8: DNS and SSH:
+# Step#8: DNS:
 ###################
-
-########### set up DNS:
-
 dnf install dnsmasq
 
 cat << EOF > /etc/NetworkManager/conf.d/dnsmasq.conf
@@ -126,12 +154,17 @@ EOF
 
 systemctl reload NetworkManager.service
 systemctl restart NetworkManager.service
+# Check if service is active: 
 systemctl is-active NetworkManager
+```
 
-########### set up SSH:
+Note that the DNS records for the "hub" SNO cluster have been created as well. 
 
-ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+### Install Openshift Client:
 
+Even though we will primarily use Bastion for making API calls and run OC commands, it doesn't hurt to install this tool on the host as well. This is optional:
+
+```
 ###################
 # Step#9: Install OC Client 
 ###################
@@ -173,12 +206,10 @@ bastion:
    mask: 255.255.255.0
    gateway: 192.168.126.1
  cmds:
- - ## todo: shut eth0?
  - echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
  - ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
  - systemctl restart sshd
  - dnf install -y podman bind-utils nmstate httpd
- - systemctl enable --now cockpit.socket
 EOF
 ```
 
@@ -201,10 +232,13 @@ kcli list vm
 
 ### Configure Password-less SSH for Bastion access:
 ```
-ssh-copy-id root@192.168.125.10 -f
+ssh-copy-id root@192.168.126.10 -f
+```
+Also make the `id_rsa` file to tbe the primary key used: 
+```
 echo "IdentityFile /root/.ssh/id_rsa" >> ~/.ssh/config
 ```
-### Create VM for Cluster: 
+### Create VM for SNO Cluster: 
 
 ```
 cat << EOF > ~/hub.yaml
@@ -244,12 +278,17 @@ More details about the requirements and other steps can be found [here](https://
 
 ### Pull Secret:
 
+For this step, you will need a pull secret from Red Hat. You can download your pull secret [here](https://console.redhat.com/openshift/downloads) (scroll all the way down to the "Token" section)
+```
+export PULL_SECRET="<<paste your pull secret here>>"
+```
+
 ```
 ###################
 # Step#11_a: Mirroring - Add Pull Secret
 ###################
-mkdir ~..docker
-echo "{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfODNhNDU4ZTJmMzRjNGIzYWE0NjliYjM1NThlM2RkZDg6U1A5VDZPRTZERFQ4RVhISlBBNjgyVFVXODdEVlUzRk5EQjYyMUU0NDUzOFdFTDNWVlpTRUU2SEdOVjZVWFFRTg==","email":"farzeesoft@yahoo.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfODNhNDU4ZTJmMzRjNGIzYWE0NjliYjM1NThlM2RkZDg6U1A5VDZPRTZERFQ4RVhISlBBNjgyVFVXODdEVlUzRk5EQjYyMUU0NDUzOFdFTDNWVlpTRUU2SEdOVjZVWFFRTg==","email":"farzeesoft@yahoo.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTlhMGNjZDFhLTE3OWEtNDg3Ny05NmZhLTMzN2U4M2Y0YzZjZDpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTRaV1ExTm1ZNU1Ua3daV1EwTmpNM09XUTJaV1U1WkRRME5XTTBNalV6WkNKOS53c2kwYlNuR25oVnhjOWswaS1wX3ZMaUtUT0F4cWNBUzZKNXEwekhVRUIzSERPQmlwR0VRcC0tMU9JZmxNNEtFWGxQZktrRDQ5SnRJTmh6X0ZGcllqeHpzeWlnSkxMa0ktOFBicjlZRkVzNVNkVVJUb2lnMThzb0lLb2pLSkZHYVNOS0kzUkpzY1pxdDZEdktvRC1jOGJqRjQ4QUJIMVZHc1VPQXN1d01aSVpfZ1ZUOFE2SGFjXzBaMEZlQTQ5bnFhVW51eUpmRjFyU0pKdjhNcmwybWpVRWxpd1EzSGpNWWtfSFZFNDBpUmpOT204eVYxOVpUY09pTEhCTXcyU2NpSnJEaUVlYW1jSEpBRVY5OEJtM1o3eFlVaG4zMHdBRE52eS15UHZZQ0lrV1A5c3lCQUxsZ0FpeEJJYmVrd3RWeGZOZEFrUVFQcHF3enRZNEFZempET3k0X01PTzFtSDNkSDBTQnpQTmI0aEROeFRyY0dVRW5XTUxCb05vMFB0YlpndmIyT09TVTFDSzUzSTRRVy1DdXY0NjMwdURRNDVvbi1KYkVCQnVnWXlJc3Q0dV9Ec0VSN0VfRmgyTW5kSHktRG1GT182V3JLQnc2ZFNlMkRaSTBqWmRzcFRMYTBvZkx3Ykd1dHdRaFI0SWJjTHZpWVNiWVNtMzM0Qnh6aHNhT3ZWRnlCSFNXSzhVYXNkTnJDSHF0VF92WnhCeElsNUpPZk9zaFducDJacEZ3SDRnMmpFbVFIVGIxcVlORldQUGhZa1lYOEhMNHJmZ0IyYmZtWmdtUTFMZVQ1Y0x4WFZkN01xNnZNbUNOeV9WN01hUWhqSzVyX2lDZElwdl9IankyYjE1aVRJQXg4RlJQcl9QZ2VEeGRFRzNnMnZKUm96aHdwNVlwRzg1NWRRTQ==","email":"farzeesoft@yahoo.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTlhMGNjZDFhLTE3OWEtNDg3Ny05NmZhLTMzN2U4M2Y0YzZjZDpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSTRaV1ExTm1ZNU1Ua3daV1EwTmpNM09XUTJaV1U1WkRRME5XTTBNalV6WkNKOS53c2kwYlNuR25oVnhjOWswaS1wX3ZMaUtUT0F4cWNBUzZKNXEwekhVRUIzSERPQmlwR0VRcC0tMU9JZmxNNEtFWGxQZktrRDQ5SnRJTmh6X0ZGcllqeHpzeWlnSkxMa0ktOFBicjlZRkVzNVNkVVJUb2lnMThzb0lLb2pLSkZHYVNOS0kzUkpzY1pxdDZEdktvRC1jOGJqRjQ4QUJIMVZHc1VPQXN1d01aSVpfZ1ZUOFE2SGFjXzBaMEZlQTQ5bnFhVW51eUpmRjFyU0pKdjhNcmwybWpVRWxpd1EzSGpNWWtfSFZFNDBpUmpOT204eVYxOVpUY09pTEhCTXcyU2NpSnJEaUVlYW1jSEpBRVY5OEJtM1o3eFlVaG4zMHdBRE52eS15UHZZQ0lrV1A5c3lCQUxsZ0FpeEJJYmVrd3RWeGZOZEFrUVFQcHF3enRZNEFZempET3k0X01PTzFtSDNkSDBTQnpQTmI0aEROeFRyY0dVRW5XTUxCb05vMFB0YlpndmIyT09TVTFDSzUzSTRRVy1DdXY0NjMwdURRNDVvbi1KYkVCQnVnWXlJc3Q0dV9Ec0VSN0VfRmgyTW5kSHktRG1GT182V3JLQnc2ZFNlMkRaSTBqWmRzcFRMYTBvZkx3Ykd1dHdRaFI0SWJjTHZpWVNiWVNtMzM0Qnh6aHNhT3ZWRnlCSFNXSzhVYXNkTnJDSHF0VF92WnhCeElsNUpPZk9zaFducDJacEZ3SDRnMmpFbVFIVGIxcVlORldQUGhZa1lYOEhMNHJmZ0IyYmZtWmdtUTFMZVQ1Y0x4WFZkN01xNnZNbUNOeV9WN01hUWhqSzVyX2lDZElwdl9IankyYjE1aVRJQXg4RlJQcl9QZ2VEeGRFRzNnMnZKUm96aHdwNVlwRzg1NWRRTQ==","email":"farzeesoft@yahoo.com"}}}" > ~/.docker/config.json
+mkdir ~/.docker
+echo $PULL_SECRET > ~/.docker/config.json
 ```
 ### Install the Mirror Registry: 
 
@@ -266,14 +305,14 @@ Run the installer:
 ###################
 # Step#11_b: Installing Mirror Registry
 ###################
-./mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@tnc
+~/mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
 ```
 
 The insaller shall create a few pods for the mirror registry, and end with the following lines: 
 
 ```
 INFO[2024-04-05 13:06:26] Quay installed successfully, config data is stored in /opt/
-INFO[2024-04-05 13:06:26] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@tnc)
+INFO[2024-04-05 13:06:26] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@redhat)
 ```
 
 To furhter verify if the installation is successful, check the pods it must have created: 
@@ -292,15 +331,12 @@ To add the newly deployed registry credentials in your locally saved pull secret
 ###################
 # Step#11_c: Adding Mirror Registry Secret
 ###################
-podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .docker/config.json
+podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .docker/config.json -u quay -p syed@redhat
 ```
 
-Then login as shown here: (using password `syed@tnc`)
-```
-Username: quay
-Password: <<<< syed@tnc
-Login Succeeded!
-```
+This will result in: 
+> Login Succeeded!
+
 ## Preparing the Bastion VM:
 
 The Bastion VM was already brought up. To make it useful, few tools will need to be installed on it. 
@@ -312,19 +348,28 @@ The Bastion VM was already brought up. To make it useful, few tools will need to
 # Step#12_a: Adding Pull Secret & Quay Cert to Bastion
 ###################
 scp .docker/config.json root@192.168.126.10:~/
-scp /opt/quay-rootCA/rootCA.pem root@192.168.125.10:~/
+scp /opt/quay-rootCA/rootCA.pem root@192.168.126.10:~/
 ```
 The rest of the configuration will be done from inside the VM. You can connect to it using the following: 
 ```
 virsh console bastion
 ```
+The credentials to use are `root` and `redhat` 
 
 ### Installing OpenShift Client, Installer  and Mirror Plugin
 
 To perform the mirroring to the registry, the `oc mirror` command will be used. This requires installation of `openshift client` as well as `mirroring pluging` for the openshift client. 
 Additionally, to build the ISO image for Agent Based Installer, the `openshift-install` binary is needed. 
 
-The following steps install all three of these items:
+The following steps install all three of these items. Before doing that, however, lets temporarily disconenct the Bastion VM from the `tnc` bridge, to ensrue that there aren't any routing issues created due to its dual connectivity. Use the following commands: 
+```
+nmcli con down "System eth0"
+sleep 5
+sed -i 's/^nameserver 192.168.125.1/#nameserver 192.168.125.1/g' /etc/resolv.conf
+```
+** HERE** 
+
+Now lets install the tools:
 
 ```
 ###################
@@ -435,12 +480,21 @@ Fri Apr  5 01:40:18 PM EDT 2024
 
 **NOTE** Takes almost 10 mins (not 4). If it fails, re-run
 
+In case the script ends with something like:
+> error: one or more errors occurred while uploading images
+
+Then just rerun the command one more time. This tends to happen in the virtual environment with virtual linux bridges. Re-run will download the items that couldn't be downloaded in previous attempt. 
+
 ## Disconnected Environment: 
 
 At this point all the tasks that require internet access for Bastion node are completed. We can go ahead and disconect it completely from the internet, using the following: 
 
 ```
+nmcli con up "System eth0"
+sleep 10
 nmcli con down "System eth1"
+sed -i 's/^#nameserver 192.168.125.1/nameserver 192.168.125.1/g' /etc/resolv.conf
+sed -i 's/^nameserver 192.168.126.1/#nameserver 192.168.126.1/g' /etc/resolv.conf
 ```
 
 Check to ensure that DNS can still be reached: 
@@ -565,6 +619,9 @@ All the pieces are ready to start the building of ISO file. Use the following co
 **NOTE** This process removes the two manifests we created earlier. IF those have to be preserved for future observation, make a copy of those at some other location. 
 
 ```
+mkdir ~/abi 
+cp install-config.yaml ~/abi/
+cp agent-config.yaml ~/abi/
 cd ~/abi
 openshift-install agent create image --dir=./ --log-level=debug
 ```
@@ -750,11 +807,11 @@ PING quay.tnc.bootcamp.lab (192.168.125.1) 56(84) bytes of data.
 ## Starting the Mirror registry:
 Full set of options `https://github.com/quay/mirror-registry` 
 ```
-./mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@tnc
+./mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
 ```
 
 > INFO[2024-03-28 07:34:08] Quay installed successfully, config data is stored in /opt/ <br>
-> INFO[2024-03-28 07:34:08] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@tnc) 
+> INFO[2024-03-28 07:34:08] Quay is available at https://quay.tnc.bootcamp.lab:8443 with credentials (quay, syed@redhat) 
 
 ## Setting up the VM for mirroring: 
 
