@@ -1,5 +1,15 @@
 [TOC]
 
+# Installing a Disconnected Cluster using Agent Based Installation method: 
+
+This lab guide uses a bare metal server to demonstrate the deployment of a fully disconnected clsuter using Agent Based Installer (ABI) methodology. 
+The lab involves the following steps. 
+1. Parepare the hoest environemnt. This installs the applications needed, and disk partitions for performing the main lab tasks. 
+2. 
+
+## Prepare the host server: 
+The lab uses m3.large.x86 metal server from Equinix. This can be requested through [RHDP](https://demo.redhat.com/catalog?search=equinix+metal+baremetal+blank)
+
 ```
 sudo -i
 dnf update -y
