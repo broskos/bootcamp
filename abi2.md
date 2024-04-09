@@ -481,7 +481,7 @@ In case the script ends with something like:
 Then just rerun the command one more time. This tends to happen in the virtual environment with virtual linux bridges. Re-run will download the items that couldn't be downloaded in previous attempt. 
 
 
-<!-- MOVING THIS TO LATER, TO BYPASS THE BUG . ONCE BUG IS FIXED, UNCOMMENT HERE
+<!--  --> 
 ## Disconnected Environment: 
 
 At this point all the tasks that require internet access for Bastion node are completed. We can go ahead and disconect it completely from the internet, using the following: 
@@ -512,7 +512,6 @@ Should show:
 > Authenticating with existing credentials for quay.tnc.bootcamp.lab:8443 <br>
 > Existing credentials are valid. Already logged in to quay.tnc.bootcamp.lab:8443
 
---> 
 
 <!-- OLD DATA. DISCARD? 
 however, lets temporarily disconenct the Bastion VM from the `tnc` bridge, to ensrue that there aren't any routing issues created due to its dual connectivity. Use the following commands: 
@@ -557,7 +556,7 @@ networking:
   - 172.30.0.0/16
 platform:
   none: {}
-pullSecret: '{"auths":{"quay.tnc.bootcamp.lab:8443":{"auth":"cXVheTpzeWVkQHRuYw=="}}}'
+pullSecret: '{"auths":{"quay.tnc.bootcamp.lab:8443":{"auth":"cXVheTpzeWVkQHJlZGhhdA=="}}}'
 sshKey: |
 EOF
 ```
@@ -658,7 +657,7 @@ sleep 10
 systemctl is-active httpd
 # should show "active"
 ```
-<!-- BUG: THE FOLLOWING CAN BE REMOVED FROM HERE AND MOVED TO EARLIER ONCE BUG IS FIXED -->
+<!-- FOLLOWING IS NO LONGER NEEDED NOW THAT ISSUE IS FIXED...BUT KEEPING FOR HISTORY
 
 Before proceeding, lets disconnect Basation completeion, so there is no chance that any data is being sourced from internet: 
 ```
@@ -667,6 +666,8 @@ sleep 10
 ip route add default via 192.168.125.1 
 sed -i 's/^nameserver 192.168.126.1/nameserver 192.168.125.1/g' /etc/resolv.conf
 ```
+
+-->
 
 You can now go ahead and mount this ISO the the VM (called `hub`) that was created in an earlier step: 
 
@@ -689,35 +690,113 @@ To verify that the mounting was successful, exit the VM, and verify by running t
 
 This command shows the availble boot sources for the vm called `hub`. As you can see, the ISO file is listed amount those sources. Its not the first source, but since the other sources don't contain any boot image, its safe to leave the boot operation as-is. (in a production deployment, the boot sequence should be changed to avoid any confusion due to some preexisting image on the local disks)
 
+## Start & Monitor the installation: 
+
+As soon as the hub VM boots from the mounted ISO file, it will start the Agent Based Installation Process. To achieve that, and being able to monitor the console, we will use graphical console available through Cockpit. 
+
+Cockpit was already enabled in the earlier steps. Lets now connect to it by pointing your browser to the IP address of the Host on port 9090. Login using the user credentials provided for the host. 
+
+![image](images/abi_1.png)
+
+By default, the login screen has restricted view. To change that, click on the "Limited Access" button on the top, as shown here: 
+
+![image](images/abi_2.png)
+
+This will enable the Administrative access view, as shown here: 
+
+![image](images/abi_3.png)
+
+On this view, select "Virtual Machines" from the left hand side menue. This will show you the configured VMs. 
+
+![image](images/abi_4.png)
+
+Select "hub"
+On the next screen, you can re-verify if the ISO is properly mounted as can be seen here: 
+
+![image](images/abi_5.png)
+
+Lets go ahead and. press "RUN"
+
+![image](images/abi_6.png)
+
+The node will now go through RHCOS Boot stages. A visual of that is shown here: 
+
+![image](images/abi_7.png)
+
+Next, it will perform connectivity checks. This may take a little while: 
+
+![image](images/abi_8.png)
+
+If this passes, then the console will proceed to the next screen that gives yuu the opportunity to interrupt and modify netweorking configuration: 
+
+![image](images/abi_9.png)
+
+In case the connectivity check etc. don't go well, you will see the failure reported. An example of such a failure is included here: 
+
+![image](images/abi_10.png)
+
+If there isn't any error, then you will soon see a login prompt for the cluster, like the one here: 
+
+![image](images/abi_11.png)
+
+Cluster is not yet deployed. Its still in progres, and will take some time to complete. 
+
+
 # TODO:
-- add GUI for start and monitor of install
-- show progrsss (use belwo) via client
 - show oc get nodes 
 - Check status of ICSP and CS ...add operators
 
-## Perform and Monitor the Installation:
+### Monitor the Installation using CLI:
 
-
-### Monitor install progress: 
-
-Once the VM is started, use the following commnad (from inside the Bastion VM, run from the ~/abi/ directory) to monitor progress:
+You can continue to monitor using console, or you can choose to monitor the pogress using command line using the following commnad (from inside the Bastion VM) to monitor progress:
 
 ```
-openshift-install agent wait-for bootstrap-complete --log-debug=debug
+openshift-install agent wait-for install-complete --log-level=debug --dir=/root/abi/
 ```
 The output will end with the following:
 ```
-INFO Host: sno, reached installation stage Writing image to disk: 6% 
-INFO Host: sno, reached installation stage Writing image to disk: 20% 
-INFO Host: sno, reached installation stage Writing image to disk: 27% 
-INFO Host: sno, reached installation stage Writing image to disk: 41% 
-INFO Host: sno, reached installation stage Writing image to disk: 48% 
-INFO Host: sno, reached installation stage Writing image to disk: 57% 
-INFO Host: sno, reached installation stage Writing image to disk: 67% 
-INFO Host: sno, reached installation stage Writing image to disk: 78% 
-INFO Host: sno, reached installation stage Writing image to disk: 84% 
-INFO Host: sno, reached installation stage Writing image to disk: 90% 
-INFO Host: sno, reached installation stage Writing image to disk: 100% 
+DEBUG asset directory: /root/abi/                  
+DEBUG Loading Agent Config...                      
+DEBUG Using Agent Config loaded from state file    
+DEBUG Loading Agent Manifests...                   
+DEBUG   Loading Agent PullSecret...                
+DEBUG     Loading Install Config...  
+<<SNIP>>
+DEBUG RendezvousIP from the AgentConfig 192.168.125.100 
+INFO Bootstrap Kube API Initialized               
 INFO Bootstrap configMap status is complete       
-INFO cluster bootstrap is complete  
+INFO cluster bootstrap is complete                
+DEBUG Still waiting for the cluster to initialize: Working towards 4.14.18: 562 of 860 done (65% complete) 
+DEBUG Still waiting for the cluster to initialize: Working towards 4.14.18: 69 of 860 done (8% complete) 
+DEBUG Still waiting for the cluster to initialize: Working towards 4.14.18: 364 of 860 done (42% complete) 
+DEBUG Still waiting for the cluster to initialize: Working towards 4.14.18: 74 of 860 done (8% complete) 
+DEBUG Still waiting for the cluster to initialize: Working towards 4.14.18: 599 of 860 done (69% complete)
+<<SNIP>>
+DEBUG Still waiting for the cluster to initialize: Cluster operator openshift-samples is not available 
+INFO Cluster is installed                         
+INFO Install complete!                            
+INFO To access the cluster as the system:admin user when using 'oc', run 
+INFO     export KUBECONFIG=/root/abi/auth/kubeconfig 
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.hub.tnc.bootcamp.lab 
+INFO Login to the console with user: "kubeadmin", and password: "agwwb-DjcFP-WV6Xo-G29Fm" 
+```
+
+Your disconnected cluster is now up and running! 
+
+Note that the very last lines in the log indicate the KUBECONFIG path, as well as `kubeadmin` credentials. 
+
+## Acessing the cluster: 
+
+```
+mkdir ~/.kube
+cp ~/abi/auth/kubeconfig ~/.kube/config
+```
+
+```
+oc get nodes
+NAME   STATUS   ROLES                         AGE   VERSION
+sno    Ready    control-plane,master,worker   17m   v1.27.11+749fe1d
+oc get clusterversion
+NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.14.18   True        False         4m8s    Cluster version is 4.14.18
 ```
