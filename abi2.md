@@ -73,7 +73,7 @@ dnf -y install kcli bash-completion vim jq tar git ipcalc python3-pip
 ###################
 # Step#4: Install other tools:
 ###################
-dnf -y install podman httpd-tools runc wget nmstate containernetworking-plugins bind-utils
+dnf -y install podman httpd-tools runc wget nmstate containernetworking-plugins bind-utils bash-completion tree
 #
 ###################
 # Step#5: Disable Firewall:
@@ -389,6 +389,11 @@ mv openshift-install /usr/bin/
 mv oc-mirror /usr/bin
 mkdir ~/.docker
 mv config.json ~/.docker/
+# 
+###################
+# Step#12_c: Installing other tools
+###################
+dnf install -y bash-completion tree
 ```
 ## Performing the Mirroring:
 
