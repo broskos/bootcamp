@@ -199,7 +199,7 @@ bastion:
    nic: eth0
    ip: 192.168.125.10
    mask: 255.255.255.0
-   gateway: 192.168.125.1
+   # gateway: 192.168.125.1
  - name: tnc-connected
    nic: eth1
    ip: 192.168.126.10
@@ -280,8 +280,9 @@ More details about the requirements and other steps can be found [here](https://
 
 For this step, you will need a pull secret from Red Hat. You can download your pull secret [here](https://console.redhat.com/openshift/downloads) (scroll all the way down to the "Token" section)
 ```
-export PULL_SECRET="<<paste your pull secret here>>"
+export PULL_SECRET='<<paste your pull secret here>>'
 ```
+**NOTE** use single quotes here, as pull secret may contain fileds with double-quotes. 
 
 ```
 ###################
@@ -361,13 +362,7 @@ The credentials to use are `root` and `redhat`
 To perform the mirroring to the registry, the `oc mirror` command will be used. This requires installation of `openshift client` as well as `mirroring pluging` for the openshift client. 
 Additionally, to build the ISO image for Agent Based Installer, the `openshift-install` binary is needed. 
 
-The following steps install all three of these items. Before doing that, however, lets temporarily disconenct the Bastion VM from the `tnc` bridge, to ensrue that there aren't any routing issues created due to its dual connectivity. Use the following commands: 
-```
-nmcli con down "System eth0"
-sleep 5
-sed -i 's/^nameserver 192.168.125.1/#nameserver 192.168.125.1/g' /etc/resolv.conf
-```
-** HERE** 
+The following steps install all three of these items. Before doing that, 
 
 Now lets install the tools:
 
@@ -485,17 +480,19 @@ In case the script ends with something like:
 
 Then just rerun the command one more time. This tends to happen in the virtual environment with virtual linux bridges. Re-run will download the items that couldn't be downloaded in previous attempt. 
 
+
+<!-- MOVING THIS TO LATER, TO BYPASS THE BUG . ONCE BUG IS FIXED, UNCOMMENT HERE
 ## Disconnected Environment: 
 
 At this point all the tasks that require internet access for Bastion node are completed. We can go ahead and disconect it completely from the internet, using the following: 
 
 ```
-nmcli con up "System eth0"
-sleep 10
 nmcli con down "System eth1"
-sed -i 's/^#nameserver 192.168.125.1/nameserver 192.168.125.1/g' /etc/resolv.conf
-sed -i 's/^nameserver 192.168.126.1/#nameserver 192.168.126.1/g' /etc/resolv.conf
+sleep 10
+ip route add default via 192.168.125.1 
+sed -i 's/^nameserver 192.168.126.1/nameserver 192.168.125.1/g' /etc/resolv.conf
 ```
+
 
 Check to ensure that DNS can still be reached: 
 ```
@@ -506,6 +503,25 @@ Address:        192.168.125.1#53
 Name:   quay.tnc.bootcamp.lab
 Address: 192.168.125.1
 ```
+
+Verify ability to login to Quay:
+```
+podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false
+```
+Should show: 
+> Authenticating with existing credentials for quay.tnc.bootcamp.lab:8443 <br>
+> Existing credentials are valid. Already logged in to quay.tnc.bootcamp.lab:8443
+
+--> 
+
+<!-- OLD DATA. DISCARD? 
+however, lets temporarily disconenct the Bastion VM from the `tnc` bridge, to ensrue that there aren't any routing issues created due to its dual connectivity. Use the following commands: 
+```
+nmcli con down "System eth0"
+sleep 5
+sed -i 's/^nameserver 192.168.125.1/#nameserver 192.168.125.1/g' /etc/resolv.conf
+```
+-->
 
 ## Creating the Agent Installer manifests: 
 
@@ -641,6 +657,15 @@ systemctl enable httpd --now
 sleep 10
 systemctl is-active httpd
 # should show "active"
+```
+<!-- BUG: THE FOLLOWING CAN BE REMOVED FROM HERE AND MOVED TO EARLIER ONCE BUG IS FIXED -->
+
+Before proceeding, lets disconnect Basation completeion, so there is no chance that any data is being sourced from internet: 
+```
+nmcli con down "System eth1"
+sleep 10
+ip route add default via 192.168.125.1 
+sed -i 's/^nameserver 192.168.126.1/nameserver 192.168.125.1/g' /etc/resolv.conf
 ```
 
 You can now go ahead and mount this ISO the the VM (called `hub`) that was created in an earlier step: 
