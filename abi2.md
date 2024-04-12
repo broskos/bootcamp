@@ -805,3 +805,30 @@ oc get clusterversion
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.14.18   True        False         4m8s    Cluster version is 4.14.18
 ```
+
+<!--
+## Some other useful snippets for later use: 
+```
+grub:
+console=tty0 console=ttyS0
+OR
+console=ttyS0,115200 console=tty0
+virsh dumpxml hubvm | grep source
+
+
+
+
+virsh start --console hubvm
+
+curl -X PATCH -H 'Content-Type: application/json' -d '{
+      "Boot": {
+          "BootSourceOverrideTarget": "Cd",
+          "BootSourceOverrideMode": "Uefi",
+          "BootSourceOverrideEnabled": "Continuous"
+      }
+    }' -k https://127.0.0.1:9000/redfish/v1/Systems/local/abinode
+
+
+~             
+```
+-->
