@@ -417,12 +417,17 @@ mirror:
   operators:
   - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
     packages:
+    - name: multicluster-engine
+      channels:
+      - name: stable-2.5
+      - name: stable-2.4
     - name: cluster-logging
       channels:
       - name: stable-5.9
     - name: advanced-cluster-management
       channels:
       - name: release-2.10
+      - name: release-2.9
     - name: local-storage-operator
       channels:
       - name: stable
@@ -468,17 +473,16 @@ To upload local images to a registry, run:
 
         oc adm catalog mirror file://redhat/redhat-operator-index:v4.14 REGISTRY/REPOSITORY
 <<SNIP>>
-info: Mirroring completed in 4m3.52s (176.5MB/s)
-Rendering catalog image "quay.tnc.bootcamp.lab:8443/redhat/redhat-operator-index:v4.14" with file-based catalog
-Writing image mapping to oc-mirror-workspace/results-1712338799/mapping.txt
-Writing CatalogSource manifests to oc-mirror-workspace/results-1712338799
-Writing ICSP manifests to oc-mirror-workspace/results-1712338799
-Fri Apr  5 01:40:18 PM EDT 2024
+info: Mirroring completed in 7m23.91s (163.7MB/s)
+Rendering catalog image "quay.tnc.bootcamp.lab:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 
+Writing image mapping to oc-mirror-workspace/results-1712941216/mapping.txt
+Writing CatalogSource manifests to oc-mirror-workspace/results-1712941216
+Writing ICSP manifests to oc-mirror-workspace/results-1712941216
 [root@bastion ~]#
 
 ```
 
-**NOTE** Takes almost 10 mins (not 4). If it fails, re-run
+**NOTE** Takes almost ~15 mins (not 7). If it fails, re-run
 
 In case the script ends with something like:
 > error: one or more errors occurred while uploading images
