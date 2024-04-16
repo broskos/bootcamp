@@ -4,6 +4,18 @@ spec:
   disableAllDefaultSources: true
 ```
 
+## add new catalog source: 
+
+Go to the directory `~/oc-mirror-workspace/results-X/ `
+(X can be any numeric value)
+
+Find the file that has the catalogsource CR in it.  use `oc apply -f <>` to apply that catalog source
+
+Check that the new catalog source is available using: 
+
+`oc get catalogsource -A`
+
+
 ## ACM:
 
 ```
