@@ -31,7 +31,13 @@ openshift-gitops-operator                    89s
 ```
 
 ## Check the catalog source for version information: 
+Use the follwing to find out the version available:
+```
+oc get packagemanifest advanced-cluster-management -o=jsonpath='{.status.channels[*].name}{"\n"}'
+```
+Output will show you:
 
+> release-2.10 release-2.9
 
 ## ACM:
 
