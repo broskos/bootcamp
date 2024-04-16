@@ -15,6 +15,23 @@ Check that the new catalog source is available using:
 
 `oc get catalogsource -A`
 
+## Check which operators are available using the new catalog source:
+
+Try the following: 
+```
+oc get packagemanifests.packages.operators.coreos.com
+NAME                               CATALOG   AGE
+multicluster-engine                          89s
+quay-operator                                89s
+local-storage-operator                       89s
+topology-aware-lifecycle-manager             89s
+cluster-logging                              89s
+advanced-cluster-management                  89s
+openshift-gitops-operator                    89s
+```
+
+## Check the catalog source for version information: 
+
 
 ## ACM:
 
