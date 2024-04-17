@@ -1,3 +1,9 @@
+For the steps in this lab, assumr root role by using:
+
+```
+sudo -i
+```
+
 ### Verify BMC Connectivity:
 ```
 curl -k https://127.0.0.1:9000/redfish/v1/Systems/local/sno2
