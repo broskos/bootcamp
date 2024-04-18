@@ -14,7 +14,7 @@ kcli show vm sno2w | grep mac
 > net interface: eth0 mac: aa:aa:aa:aa:04:01 net: 5gdeploymentlab type: routed
 
 ```
-cat << EOF >> /root/5g-deployment-lab/ztp-repository/clusters/site-group-1/5glab.yaml
+cat << EOF >> ~/5g-deployment-lab/ztp-repository/clusters/site-group-1/5glab.yaml
       - hostName: "sno2w.5g-deployment.lab"
         role: "worker"
         # We can add custom labels to our nodes, these will be added once the node joins the cluster
@@ -73,7 +73,7 @@ while true; do echo "############## echo -n `date` ##############"; echo "------
 ```
 
 ```
-oc get nodes --kubeconfig ./sno2-kubeconfig 
+oc get nodes --kubeconfig ~/sno2-kubeconfig 
 ```
 > NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STATUS&nbsp;&nbsp;&nbsp;ROLES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VERSION<br>
 > sno2.5g-deployment.lab&nbsp;&nbsp;&nbsp;&nbsp;Ready&nbsp;&nbsp;&nbsp;&nbsp;control-plane,master,worker&nbsp;&nbsp;&nbsp;5h57m&nbsp;&nbsp;&nbsp;v1.27.6+f67aeb3<br>
