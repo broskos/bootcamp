@@ -26,7 +26,7 @@ These lab requires either a lightweight RHEL server (could be a VM) or a SNO (fo
 1 | Kustomization Lab |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/kustomization.md | 
 2 | Understanding OpenShift GitOps |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/gitops.md | 
 3 | Lab Module to Translate SiteConfig |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/siteconfig.md | 
-4 | Lab module to experience PGT Translation https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/policies.md | 
+4 | Lab module to experience PGT Translation | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/policies.md | 
 
 
 ## Labs for ZTP: 
