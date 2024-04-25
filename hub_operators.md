@@ -1,15 +1,21 @@
+
+## Disable default catalog sources: 
+
 ```
-oc edit operatorhubs.config.openshift.io cluster
-spec:
+cat << EOF | oc apply -f -
+apiVersion: config.openshift.io/v1
+kind: OperatorHub
+metadata:
+  name: cluster
+spec: 
   disableAllDefaultSources: true
 ```
 
 ## add new catalog source: 
 
-Go to the directory `~/oc-mirror-workspace/results-X/ `
-(X can be any numeric value)
-
-Find the file that has the catalogsource CR in it.  use `oc apply -f <>` to apply that catalog source
+```
+cat ~/oc-mirror-workspace/$(ls ~/oc-mirror-workspace/ | grep result)/catalog*.yaml | oc apply -f -
+```
 
 Check that the new catalog source is available using: 
 
