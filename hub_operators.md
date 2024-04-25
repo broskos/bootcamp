@@ -1,4 +1,3 @@
-
 ## Disable default catalog sources: 
 
 ```
@@ -170,4 +169,5 @@ spec:
 
 
 For VNC: https://www.ibm.com/support/pages/how-configure-vnc-server-red-hat-enterprise-linux-8
+For releease info: `oc adm release info --insecure=true --idms-file=/root/oc-mirror-workspace/results-1714073520/imageContentSourcePolicy.yaml`
 
