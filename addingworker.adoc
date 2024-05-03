@@ -1,0 +1,204 @@
+## Apply the manifests for the needed CRs for worker node: 
+
+Apply the following to create: 
+** worker nodes networking configuration defined as a `secret`
+** BMC credentials for the node defined as a `secret`
+** A `baremetalhost` CR, that leverages the above two
+
+```
+---
+apiVersion: v1 
+kind: Secret
+metadata:
+ name: openshift-worker-1-network-config-secret 
+ namespace: openshift-machine-api
+type: Opaque
+stringData:
+ nmstate: |  
+  interfaces: 
+  - name: bond0
+    type: bond 
+    state: up
+    mtu: 8950
+    link-aggregation:
+      mode: '802.3ad'
+      options:
+        miimon: "1500"
+      port:
+      - eno12399
+      - eno12409
+    ipv4:
+      address:
+      - ip: 172.31.41.9
+        prefix-length: 24
+      enabled: true
+      dhcp: false
+    ipv6:
+      address:
+      - ip: fd00:2023:41::9
+        prefix-length: 48
+      enabled: true
+      dhcp: false
+  - name: bond1
+    type: bond 
+    state: up
+    mtu: 8950
+    link-aggregation:
+      mode: '802.3ad'
+      options:
+        miimon: "1500"
+      port:
+      - eno12419
+      - eno12429
+  - name: eno12399
+    type: ethernet
+    state: down
+    mac-address: 30:3E:A7:03:0F:10
+  - name: eno12409
+    type: ethernet
+    state: down
+    mac-address: 30:3E:A7:03:0F:11
+  - name: eno12419
+    type: ethernet
+    state: down
+    mac-address: 30:3E:A7:03:0F:12
+  - name: eno12429
+    type: ethernet
+    state: down
+    mac-address: 30:3E:A7:03:0F:13
+  dns-resolver:
+    config:
+      server:
+        - 192.168.22.4
+  routes:
+    config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 172.31.41.1
+        next-hop-interface: bond0
+        table-id: 254
+      - destination: ::/0
+        next-hop-address: fd00:2023:41::1
+        next-hop-interface: bond0
+        table-id: 254
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openshift-worker-1-bmc-secret 
+  namespace: openshift-machine-api
+type: Opaque
+data:
+  username: cm9vdA== 
+  password: Y2Fsdmlu
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: openshift-worker-1 
+  namespace: openshift-machine-api
+spec:
+  online: True
+  bootMACAddress: 30:3E:A7:03:0F:10
+  bmc:
+    address: idrac-virtualmedia://192.168.22.153/redfish/v1/Systems/System.Embedded.1
+    credentialsName: openshift-worker-1-bmc-secret 
+    disableCertificateVerification: True 
+  preprovisioningNetworkDataName: openshift-worker-1-network-config-secret 
+```
+
+The newly added BMH CR should show up in the list: 
+```
+oc get bmh -A
+NAMESPACE               NAME                 STATE       CONSUMER                  ONLINE   ERROR   AGE
+openshift-machine-api   openshift-worker-1   available                             true             2d21h
+openshift-machine-api   super1               unmanaged   mgmt-ebc-gdvr9-master-0   true             2d23h
+openshift-machine-api   super2               unmanaged   mgmt-ebc-gdvr9-master-1   true             2d23h
+openshift-machine-api   super3               unmanaged   mgmt-ebc-gdvr9-master-2   true             2d23h
+```
+
+
+## Step2: Scale up the machineset: 
+
+Check the status of machinetset: 
+
+```
+oc get machinesets -n openshift-machine-api
+NAME                      DESIRED   CURRENT   READY   AVAILABLE   AGE
+mgmt-ebc-gdvr9-worker-0   0         0                             2d23h
+```
+Now scale up the machine set count by 1: 
+
+```
+oc scale --replicas=1 machinesets mgmt-ebc-gdvr9-worker-0 -n openshift-machine-api
+```
+
+The change will cause the BMH to enter `provisioning` state as shown here: 
+
+```
+oc get bmh -A
+NAMESPACE               NAME                 STATE          CONSUMER                        ONLINE   ERROR   AGE
+openshift-machine-api   openshift-worker-1   provisioning   mgmt-ebc-gdvr9-worker-0-cmgrc   true             2d21h
+openshift-machine-api   super1               unmanaged      mgmt-ebc-gdvr9-master-0         true             2d23h
+openshift-machine-api   super2               unmanaged      mgmt-ebc-gdvr9-master-1         true             2d23h
+openshift-machine-api   super3               unmanaged      mgmt-ebc-gdvr9-master-2         true             2d23h
+```
+
+The `machine` CR will also show the new machine being added: 
+
+```
+oc get machines -n openshift-machine-api  
+NAME                         PHASE          TYPE   REGION   ZONE   AGE
+mgmt1-pqdng-master-0         Running                               44d
+mgmt1-pqdng-master-1         Running                               44d
+mgmt1-pqdng-master-2         Running                               44d
+mgmt1-pqdng-worker-0-q4trp   Provisioning                          86s
+```
+
+The BMH CR will transition state from `registering` --> `inspecting` --> `provisioning` --> `provisioned` 
+
+[!NOTE] Took around 16 minutes to reach provisioned state
+
+```
+oc get bmh -n openshift-machine-api   openshift-worker-1 
+NAME                 STATE         CONSUMER                        ONLINE   ERROR   AGE
+openshift-worker-1   provisioned   mgmt-ebc-gdvr9-worker-0-cmgrc   true             2d21h  
+```
+
+## Step3: Approve the CSR:
+
+After the node has reached `provisioned` state, the new CSR will show up as shown below: 
+
+[!NOTE] It took around 30 minutes for the CSR to appear *after* the node had reached `provisioned` state
+
+```
+oc get csr 
+NAME        AGE    SIGNERNAME                                    REQUESTOR                                                                   REQUESTEDDURATIO
+N   CONDITION
+csr-bgxjl   72m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-blszz   56m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-gwv5g   10m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-j8vsx   103m   kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-llsqs   118m   kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-m59n8   87m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-pstl2   133m   kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-qgnxw   25m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-sr86w   41m    kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+csr-xm66n   148m   kubernetes.io/kube-apiserver-client-kubelet   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   <none>          
+    Pending
+```
+
+Approve the CSR using: 
+```
+oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve
+```
+
+
