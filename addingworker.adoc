@@ -442,7 +442,6 @@ Update the ssh key and other values according to your environment
 
 ```
 cat << EOF | oc apply -f -
-```
 apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
 metadata:
