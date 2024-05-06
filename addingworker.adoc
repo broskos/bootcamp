@@ -1,4 +1,6 @@
-# Adding a worker node: 
+[TOC]
+
+# Adding a worker node (IPI Method): 
 
 ## Step1: Apply the manifests for the needed CRs for worker node: 
 
