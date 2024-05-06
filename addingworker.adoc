@@ -535,3 +535,6 @@ oc get machinesets.machine.openshift.io -A
 NAMESPACE               NAME                   DESIRED   CURRENT   READY   AVAILABLE   AGE
 openshift-machine-api   mgmt1-pqdng-worker-0   0         0                             50d
 ```
+
+Useful URL for this process: https://docs.openshift.com/container-platform/4.14/nodes/nodes/nodes-sno-worker-nodes.html#sno-adding-worker-nodes-to-single-node-clusters-manually_add-workers
+
