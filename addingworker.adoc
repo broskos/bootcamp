@@ -134,7 +134,10 @@ host-record=openshift-worker-1.npss.bos2.lab,172.31.41.9
 
 ```
 
-[NOTE] Ensure to restart NetworkManager or dnsmasq etc. after making DNS record changes
+[NOTE]
+======
+ Ensure to restart NetworkManager or dnsmasq etc. after making DNS record changes
+======
 
 ## Step3: Scale up the machineset: 
 
@@ -175,7 +178,10 @@ mgmt1-pqdng-worker-0-q4trp   Provisioning                          86s
 
 The BMH CR will transition state from `registering` --> `inspecting` --> `provisioning` --> `provisioned` 
 
-[NOTE] Took around 16 minutes to reach provisioned state
+[NOTE] 
+======
+Took around 16 minutes to reach provisioned state
+======
 
 ```
 oc get bmh -n openshift-machine-api   openshift-worker-1 
@@ -187,7 +193,10 @@ openshift-worker-1   provisioned   mgmt-ebc-gdvr9-worker-0-cmgrc   true         
 
 After the node has reached `provisioned` state, the new CSR will show up as shown below: 
 
-[NOTE] At different attemtpts, it took from 4 to 10 minutes for the CSR to appear *after* the node had reached `provisioned` state
+[NOTE] 
+======
+At different attemtpts, it took from 4 to 10 minutes for the CSR to appear *after* the node had reached `provisioned` state
+======
 
 ```
 oc get csr 
@@ -241,7 +250,10 @@ openshift-machine-api   mgmt1-pqdng-worker-0-tcrx6   Deleting                   
 ```
 During this time, the worker node will get automatically drained and also cardoned off: 
 
-[NOTE] Automatic draining can be disabled by annotating `machine.openshift.io/exclude-node-draining` in a specific machine
+[NOTE] 
+======
+Automatic draining can be disabled by annotating `machine.openshift.io/exclude-node-draining` in a specific machine
+======
 
 ```
 oc get nodes | grep worker 
@@ -284,7 +296,10 @@ baremetalhost.metal3.io "openshift-worker-1" deleted
 
 First download the openshift-install binary using:
 
-[NOTE] You can use `oc get clusterversions.config.openshift.io` to find the cluster's version and define the OCP_VERSION variable accordingly
+[NOTE] 
+======
+You can use `oc get clusterversions.config.openshift.io` to find the cluster's version and define the OCP_VERSION variable accordingly
+======
 
 ```
 export OCP_VERSION=4.12.34
@@ -420,7 +435,10 @@ EOF
 
 Use the following to add a manifest for infraEnv CR: 
 
-[NOTE]Update the ssh key and other values according to your environment
+[NOTE]
+======
+Update the ssh key and other values according to your environment
+======
 
 ```
 cat << EOF | oc apply -f -
