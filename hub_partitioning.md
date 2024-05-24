@@ -28,7 +28,7 @@ metadata:
   name: 98-var-partition
 storage:
   disks:
-  - device: /dev/disk/by-path/pci-0000:00:06.0
+  - device: /dev/disk/by-path/pci-0000:04:00.0
     partitions:
       - number: 1
         should_exist: true
@@ -63,7 +63,7 @@ storage:
       with_mount_unit: true
     - device: /dev/disk/by-partlabel/var-lib-etcd
       format: xfs
-      mount_options: [default, prjquota]
+      mount_options: [defaults, prjquota]
       path: /var/lib/etcd
       wipe_filesystem: true
       with_mount_unit: true
@@ -72,23 +72,9 @@ storage:
       path: /var/lib/prometheus/data
       wipe_filesystem: true
       with_mount_unit: true
-      mount_options: [default, prjquota]
-
-# total 0
-# drwxr-xr-x. 2 root root 200 May 23 18:29 .
-# drwxr-xr-x. 8 root root 160 May 23 18:29 ..
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 pci-0000:00:04.0-ata-4 -> ../../sr0
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 pci-0000:00:04.0-ata-4.0 -> ../../sr0
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 pci-0000:00:06.0 -> ../../vda
-# lrwxrwxrwx. 1 root root  10 May 23 18:29 pci-0000:00:06.0-part1 -> ../../vda1
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 pci-0000:00:07.0 -> ../../vdb
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 virtio-pci-0000:00:06.0 -> ../../vda
-# lrwxrwxrwx. 1 root root  10 May 23 18:29 virtio-pci-0000:00:06.0-part1 -> ../../vda1
-# lrwxrwxrwx. 1 root root   9 May 23 18:29 virtio-pci-0000:00:07.0 -> ../../vdb
-# [root@hub ~]# 
-# 
-
+      mount_options: [defaults, prjquota]
 ```
+
 
 Create the machine config: 
 ```
@@ -103,3 +89,41 @@ cp agent-config.yaml ~/abi/
 cd ~/abi
 mkdir openshift
 cp ../98-var-partition.yaml openshift/
+```
+
+
+Other condfigs: 
+
+```
+apiVersion: v1alpha1
+metadata:
+  name: hub
+rendezvousIP: 192.168.125.100
+hosts:
+  - hostname: sno
+    rootDeviceHints:
+      deviceName: "/dev/vda"
+    interfaces:
+     - name: eth0
+       macAddress: 52:54:00:35:bb:80
+    networkConfig:
+      interfaces:
+      - name: eth0
+        state: up
+        ipv4:
+          address:
+          - ip: 192.168.125.100
+            prefix-length: 24
+          enabled: true
+          dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - 192.168.125.1
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.125.1
+            table-id: 254
+            next-hop-interface: eth0
+```
