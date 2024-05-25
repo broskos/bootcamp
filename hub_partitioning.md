@@ -1,3 +1,5 @@
+[toc]
+
 # Changes compared to original lab: 
 
 ## Install Butane: 
