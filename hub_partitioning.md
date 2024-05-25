@@ -1,3 +1,5 @@
+# Changes compared to original lab: 
+
 ## Install Butane: 
 
 On Bastion, before disconnecting: 
@@ -17,7 +19,67 @@ Important Directories:
 /var/lib/etcd | Used to store etcd data | 
 /var | any data that user may want to keep segregated | 
 
-## Butane File:
+## In hub.yaml:
+
+Instead of: 
+```
+ disks:
+ - size: 200
+ - size: 300
+```
+Use: 
+```
+ disks:
+ - size: 16000
+ - size: 800
+```
+
+## In agent-config.yaml:
+
+Add "rootDeviceHint" to ensure that partitioned disk is consistently used: 
+
+```
+apiVersion: v1alpha1
+metadata:
+  name: hub
+rendezvousIP: 192.168.125.100
+hosts:
+  - hostname: sno
+    rootDeviceHints:
+      deviceName: "/dev/vda"
+    interfaces:
+     - name: eth0
+       macAddress: 52:54:00:35:bb:80
+    networkConfig:
+      interfaces:
+      - name: eth0
+        state: up
+        ipv4:
+          address:
+          - ip: 192.168.125.100
+            prefix-length: 24
+          enabled: true
+          dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - 192.168.125.1
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.125.1
+            table-id: 254
+            next-hop-interface: eth0
+```
+
+# Steps to follow before beuidling ISO:
+
+Before beuilding ISO, a machineconfig has to be placed in the correct location so it pikcs up the partiioning instructions. This machine config has built using butane. So steps will be: 
+1) create butane file 
+2) use butane utililty to create maching config, and put it under `~/abi/openshift` directory 
+3) now build the ISO as usual
+
+## 1) Butane File:
 
 ```
 variant: openshift
@@ -75,55 +137,16 @@ storage:
       mount_options: [defaults, prjquota]
 ```
 
-
-Create the machine config: 
+## 2)  Create the machine config: 
 ```
 butane ~/partition.bu -o ~/98-var-partition.yaml
 ```
-
-In the ABI section:
+Now: 
 ```
-mkdir ~/abi 
-cp install-config.yaml ~/abi/
-cp agent-config.yaml ~/abi/
-cd ~/abi
-mkdir openshift
-cp ../98-var-partition.yaml openshift/
+mkidr -p ~/abi/openshift/
+mv 98-var-partition.yaml ~/abi/openshift/
 ```
 
+## 3) Create the ABI image as before: 
 
-Other condfigs: 
-
-```
-apiVersion: v1alpha1
-metadata:
-  name: hub
-rendezvousIP: 192.168.125.100
-hosts:
-  - hostname: sno
-    rootDeviceHints:
-      deviceName: "/dev/vda"
-    interfaces:
-     - name: eth0
-       macAddress: 52:54:00:35:bb:80
-    networkConfig:
-      interfaces:
-      - name: eth0
-        state: up
-        ipv4:
-          address:
-          - ip: 192.168.125.100
-            prefix-length: 24
-          enabled: true
-          dhcp: false
-      dns-resolver:
-        config:
-          server:
-            - 192.168.125.1
-      routes:
-        config:
-          - destination: 0.0.0.0/0
-            next-hop-address: 192.168.125.1
-            table-id: 254
-            next-hop-interface: eth0
-```
+No new step here. 
