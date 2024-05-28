@@ -558,4 +558,8 @@ openshift-machine-api   mgmt1-pqdng-worker-0   0         0                      
 
 Useful URL for this process: https://docs.openshift.com/container-platform/4.14/nodes/nodes/nodes-sno-worker-nodes.html#sno-adding-worker-nodes-to-single-node-clusters-manually_add-workers
 
-Another useful URL: https://www.redhat.com/en/blog/how-to-add-a-worker-to-an-imported-ocp-cluster-using-mce 
+Other useful URLs: 
+** https://www.redhat.com/en/blog/how-to-add-a-worker-to-an-imported-ocp-cluster-using-mce 
+** https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#adding-worker-nodes-to-clusters-managed-by-the-multicluster-engine-for-kubernetes
+** https://docs.openshift.com/container-platform/4.14/nodes/nodes/nodes-sno-worker-nodes.html#sno-adding-worker-nodes-to-single-node-clusters-manually_add-workers
+
