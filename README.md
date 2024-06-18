@@ -43,9 +43,9 @@ Once the environment is ready, use [these stesp](https://gitlab.consulting.redha
 |6 |  Prepare Git Structure |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_0_git_structure.md  | 
 |7 |  Prepare SiteConfig |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_1_siteconfig_sno2.md |
 |8 |  Prepare PGT | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_2_pgt.md |
-|9 | Run ZTP Deployment GitOps |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_3_running_app.md |
+|9 | Run ZTP Deployment GitOps |  https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_3_running_app.md |
 |10| Importing a pre-deployed Cluster | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_4_adding_sno1.md |
 |11| Applying Day2 policy | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_4_day2_policies.md |
 |12| Upgrading a ZTP Deployed Clusters | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_5_upgrade.md |
-|13| A Worker Node to a Cluster | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_6_adding_worker.md|
+|13| A Worker Node to a Cluster | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_6_adding_worker.md |
 |14| Deploy SNO3 with Extra Manifests | https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/main/lab_build_X_deploy_sno3.md |
