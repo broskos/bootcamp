@@ -393,7 +393,14 @@ mkdir ~/.docker
 mv config.json ~/.docker/
 # 
 ###################
-# Step#12_c: Installing other tools
+# Step#12_c: Installing Butane (will be used in subsequent steps)
+###################
+curl https://mirror.openshift.com/pub/openshift-v4/clients/butane/latest/butane --output butane
+mv butane /usr/bin/
+chmod u+x /usr/bin/butane
+#
+###################
+# Step#12_d: Installing other tools
 ###################
 dnf install -y bash-completion tree
 ```
@@ -620,6 +627,8 @@ metadata:
 rendezvousIP: 192.168.125.100
 hosts:
   - hostname: sno
+    rootDeviceHints:
+      deviceName: "/dev/vda"
     interfaces:
      - name: eth0
        macAddress: 52:54:00:35:bb:80
@@ -645,6 +654,143 @@ hosts:
             next-hop-interface: eth0
 EOF
 ```
+
+### Adding extra manifests: 
+Extra manifests and machine configs can be bundled into the agent installer ISO image but placing those under the `./openshift` directory relative to the path where the `agent-config.yaml` and `install-config.yaml` are palced. 
+
+These manifests could include machineConfigs (here, we will create those for partitioinng disk at installation time, as well as set the NTP server). The manifests can also contiain operator subscriptions, however, only operators that reside in the namespace that exist (such as `openshift-operators`) shall be creatd. Thats because actual operator install doesn't take place until after the cluster is baked. For the same reason, the instance of this operator can not be created through these manifests because the subscription actually doesn't exist untill the cluster is baked and ready, providing an instance configuraiton will make the installation tools wait for it to complete, while it will never complete possibly due to missing CRDs (that get created by the subscriptiob)
+
+We will create the following extra configuration files (and in the next step, these will be copied to the apppriate directory): 
+
+#### Adding Validated Patterns Operator:
+Since this operator is created in the `openshift-operatos` namespace, which exists by default, its subscription can be created at installation time. 
+```
+cat << EOF > ~/vpatter.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: patterns-operator
+  namespace: openshift-operators
+  labels:
+    operators.coreos.com/patterns-operator.openshift-operators: ""
+spec:
+  channel: fast
+  installPlanApproval: Automatic
+  name: patterns-operator
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+---
+EOF
+```
+
+#### Creating Partitions:
+
+OpenShift Container Platform supports the addition of a single partition to attach storage to either the /var directory or a subdirectory of /var. For example:
+
+Important Directories: 
+
+| location | purpose | 
+|--------|-------------|
+/var/lib/containers | Used to store container imaes and data | 
+/var/lib/etcd | Used to store etcd data | 
+/var | any data that user may want to keep segregated | 
+
+Partitiions can be overridden by using machineConfig files at boot time. However, to create the proper machineConfig file, a tool called `Butane` is used. It was downloaded in an earlier step (#12_c) from redhat. Butane has its own yaml format that it ingests to create the machine config CR. 
+
+The following will be used for Butane:
+
+```
+cat << EOF > ~/partition.bu 
+variant: openshift
+version: 4.15.0
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 98-var-partition
+storage:
+  disks:
+  - device: /dev/disk/by-path/pci-0000:09:00.0
+    partitions:
+      - number: 1
+        should_exist: true
+      - number: 2
+        should_exist: true
+      - number: 3
+        should_exist: true
+      - number: 4
+        resize: true
+        size_mib: 460000
+#      - label: var-lib-containers
+#        number: 5
+#        size_mib: 460000
+#        start_mib: 0
+#        wipe_partition_entry: true
+      - label: var-lib-etcd
+        number: 6
+        size_mib: 4000
+        start_mib: 0
+        wipe_partition_entry: true
+#      - label: var-lib-prometheus-data
+#        number: 7
+#        size_mib: 0
+#        start_mib: 0
+#        wipe_partition_entry: true
+  filesystems:
+#    - device: /dev/disk/by-partlabel/var-lib-containers
+#      format: xfs
+#      mount_options: [defaults, prjquota]
+#      path: /var/lib/containers
+#      wipe_filesystem: true
+#      with_mount_unit: true
+    - device: /dev/disk/by-partlabel/var-lib-etcd
+      format: xfs
+      mount_options: [defaults, prjquota]
+      path: /var/lib/etcd
+      wipe_filesystem: true
+      with_mount_unit: true
+#    - device: /dev/disk/by-partlabel/var-lib-prometheus-data
+#      format: xfs
+#      path: /var/lib/prometheus/data
+#      wipe_filesystem: true
+#      with_mount_unit: true
+#      mount_options: [defaults, prjquota]
+EOF
+```
+
+Now run butane to ingest this file:
+```
+butane ~/partition.bu -o ~/98-var-partition.yaml
+```
+
+### Creating file for chrony configuration:
+
+This time, we will skip the butane step, and directly create the following machineConfig file:
+
+```
+cat << EOF > ~/chrony.yaml
+ Generated by Butane; do not edit
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 99-master-chrony
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+        - contents:
+            compression: ""
+            source: data:,driftfile%20%2Fvar%2Flib%2Fchrony%2Fdrift%0Amakestep%201.0%203%0Aserver%20192.168.125.1%20iburst%0A
+          mode: 420
+          overwrite: true
+          path: /etc/chrony.conf
+```
+
+
+
 ## Creating & Mounting the ISO file:
 
 All the pieces are ready to start the building of ISO file. Use the following command for that: 
@@ -656,6 +802,10 @@ mkdir ~/abi
 cp install-config.yaml ~/abi/
 cp agent-config.yaml ~/abi/
 cd ~/abi
+mkdir openshift 
+cp ~/vpattern.yaml ./openshift/
+cp ~/98-var-partition.yaml ./openshift/
+cp ~/chrony.yaml ./openshift/
 openshift-install agent create image --dir=./ --log-level=debug
 ```
 
