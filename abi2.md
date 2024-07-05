@@ -191,6 +191,8 @@ bastion:
  image: centos9stream
  numcpus: 6
  memory: 16000
+ disks:
+ - size: 400
  files:
  - path: /etc/motd
    content: Welcome to the cruel world
@@ -246,8 +248,8 @@ hub:
  pool: default
  uefi: true
  start: false
- numcpus: 16
- memory: 48000
+ numcpus: 12
+ memory: 32000
  disks:
  - size: 200
  - size: 300
