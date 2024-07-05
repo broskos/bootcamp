@@ -417,6 +417,11 @@ mirror:
       minVersion: 4.14.18
       maxVersion: 4.14.18
   operators:
+  - catalog: registry.redhat.io/redhat/community-operator-index:v4.14 
+    packages:
+    - name: patterns-operator
+      channels: 
+      - name: fast
   - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
     packages:
     - name: multicluster-engine
@@ -444,6 +449,7 @@ mirror:
       - name: latest
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
+  - name: registry.redhat.io/openshift4/ose-tools-rhel8:latest
   helm: {}
 EOF
 ```
