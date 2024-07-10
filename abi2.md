@@ -682,7 +682,7 @@ spec:
 ---
 EOF
 ```
-
+<!-- >
 #### Creating Partitions:
 
 OpenShift Container Platform supports the addition of a single partition to attach storage to either the /var directory or a subdirectory of /var. For example:
@@ -762,7 +762,7 @@ Now run butane to ingest this file:
 butane ~/partition.bu -o ~/98-var-partition.yaml
 ```
 
-### Creating file for chrony configuration:
+#### Creating file for chrony configuration:
 
 This time, we will skip the butane step, and directly create the following machineConfig file:
 
@@ -789,7 +789,7 @@ spec:
           path: /etc/chrony.conf
 ```
 
-
+-->
 
 ## Creating & Mounting the ISO file:
 
