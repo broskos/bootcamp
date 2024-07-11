@@ -693,7 +693,7 @@ We will create the following extra configuration files (and in the next step, th
 #### Adding Validated Patterns Operator:
 Since this operator is created in the `openshift-operatos` namespace, which exists by default, its subscription can be created at installation time. 
 ```
-cat << EOF > ~/vpatter.yaml
+cat << EOF > ~/vpattern.yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -705,7 +705,7 @@ spec:
   channel: fast
   installPlanApproval: Automatic
   name: patterns-operator
-  source: community-operators
+  source: cs-community-operator-index
   sourceNamespace: openshift-marketplace
 ---
 EOF
@@ -832,8 +832,13 @@ cp agent-config.yaml ~/abi/
 cd ~/abi
 mkdir openshift 
 cp ~/vpattern.yaml ./openshift/
+```
+<!-- 
 cp ~/98-var-partition.yaml ./openshift/
 cp ~/chrony.yaml ./openshift/
+-->
+Build the ISO file:
+```
 openshift-install agent create image --dir=./ --log-level=debug
 ```
 
@@ -996,6 +1001,7 @@ version   4.14.18   True        False         4m8s    Cluster version is 4.14.18
 ## Installing Operators using Validated Pattern Operator:
 
 ```
+
 git clone http://git.tnc.bootcamp.lab:3000/syed/vpattern.git
 ```
 
