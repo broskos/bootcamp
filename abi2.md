@@ -340,6 +340,26 @@ podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .d
 This will result in: 
 > Login Succeeded!
 
+## Install Git:
+```
+mkdir -p /opt/gitea/{data,config}
+chown -R 1000:1000 /opt/gitea/
+semanage fcontext -a  -t container_file_t '/opt/gitea(/.*)?'
+restorecon -R /opt/gitea/
+podman run --name gitea -p 192.168.125.1:3000:3000 -p 192.168.125.1:2222:2222 -v /opt/gitea/config/:/etc/gitea/ -v /opt/gitea/data/:/var/lib/gitea -e GITEA__security__INSTALL_LOCK=true -d quay.io/sfhassan/gitea:1.21.11-rootless
+```
+```
+podman exec -it gitea /bin/sh -c "gitea admin user create --admin --username syed --password syed1234 --email syed@example.com"
+```
+
+```
+echo "address=/git.tnc.bootcamp.lab/192.168.125.1" > /etc/NetworkManager/dnsmasq.d/hub.conf 
+systemctl restart NetworkManager
+```
+```
+mkdir git; cd git 
+```
+
 ## Preparing the Bastion VM:
 
 The Bastion VM was already brought up. To make it useful, few tools will need to be installed on it. 
