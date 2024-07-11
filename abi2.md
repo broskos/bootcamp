@@ -16,13 +16,16 @@ The lab uses m3.large.x86 metal server from Equinix. This can be requested throu
 Use the following to set up the server: 
 
 ```
+sudo -i
+```
+```
 ###################
 # Step#1: Basic Config, Add-ons and Disk Partitiions:
 ###################
-sudo -i
 dnf update -y
 # install python and cockpit (for VM console later)
 dnf -y install python3.9 cockpit cockpit-machines
+dnf -y install python-pip
 systemctl enable --now cockpit.socket
 # set python stuff (path needed in RHEL8)
 ln -s /bin/pip3 /bin/pip
