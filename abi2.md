@@ -430,7 +430,7 @@ chmod u+x /usr/bin/butane
 ###################
 # Step#12_d: Installing other tools
 ###################
-dnf install -y bash-completion tree
+dnf install -y bash-completion tree git
 ```
 ## Performing the Mirroring:
 
@@ -938,10 +938,6 @@ If there isn't any error, then you will soon see a login prompt for the cluster,
 Cluster is not yet deployed. Its still in progres, and will take some time to complete. 
 
 
-# TODO:
-- show oc get nodes 
-- Check status of ICSP and CS ...add operators
-
 ### Monitor the Installation using CLI:
 
 You can continue to monitor using console, or you can choose to monitor the pogress using command line using the following commnad (from inside the Bastion VM) to monitor progress:
@@ -996,6 +992,13 @@ oc get clusterversion
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.14.18   True        False         4m8s    Cluster version is 4.14.18
 ```
+
+## Installing Operators using Validated Pattern Operator:
+
+```
+git clone http://git.tnc.bootcamp.lab:3000/syed/vpattern.git
+```
+
 
 <!--
 ## Some other useful snippets for later use: 
