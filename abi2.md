@@ -237,7 +237,7 @@ kcli list vm
 
 ### Configure Password-less SSH for Bastion access:
 ```
-ssh-copy-id root@192.168.126.10 -f
+ssh-copy-id -f root@192.168.126.10
 ```
 Also make the `id_rsa` file to tbe the primary key used: 
 ```
@@ -345,22 +345,27 @@ This will result in:
 
 ## Install Git:
 ```
-mkdir -p /opt/gitea/{data,config}
+wget https://cloudify.network/CLEMEA/tnc_gitea.tar.gz 
+tar -xvpf tnc_gitea.tar.gz -C /
+# mkdir -p /opt/gitea/{data,config}
 chown -R 1000:1000 /opt/gitea/
 semanage fcontext -a  -t container_file_t '/opt/gitea(/.*)?'
 restorecon -R /opt/gitea/
-podman run --name gitea -p 192.168.125.1:3000:3000 -p 192.168.125.1:2222:2222 -v /opt/gitea/config/:/etc/gitea/ -v /opt/gitea/data/:/var/lib/gitea -e GITEA__security__INSTALL_LOCK=true -d quay.io/sfhassan/gitea:1.21.11-rootless
-```
-```
-podman exec -it gitea /bin/sh -c "gitea admin user create --admin --username syed --password syed1234 --email syed@example.com"
+podman run --name gitea -p 192.168.125.1:3000:3000 -p 192.168.125.1:2222:2222 -v /opt/gitea/config/:/etc/gitea/ -v /opt/gitea/data/:/var/lib/gitea -e GITEA__security__INSTALL_LOCK=true -d quay.io/sfhassan/gitea:tnc
 ```
 
+<!--
+```
+podman exec -it gitea /bin/sh -c "gitea admin user create --admin --username syed --password hassan --email syed@tnc.bootcamp.lab"
+```
+-->
+
+This Git is preconfigured with username `syed` and password `hassan` . It also has a customized copy of validated pattern GIT repository that is publicly available at: https://github.com/Ladanow/ebc-multicloud-gitops/) 
+
+Add the GIT sever to your DNS:
 ```
 echo "address=/git.tnc.bootcamp.lab/192.168.125.1" > /etc/NetworkManager/dnsmasq.d/hub.conf 
 systemctl restart NetworkManager
-```
-```
-mkdir git; cd git 
 ```
 
 ## Preparing the Bastion VM:
