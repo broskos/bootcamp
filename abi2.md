@@ -357,6 +357,7 @@ Run the installer:
 ###################
 ~/mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
 ```
+Note that you might see some messages such as `fatal: [root@hypervisor]: FAILED! ` during this process. Those are warnings and not as fartal. Those can be ignored as long as the process eventually completes as shown below. 
 
 The insaller shall create a few pods for the mirror registry, and end with the following lines: 
 
