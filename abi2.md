@@ -2,7 +2,7 @@
 
 # Installing a Disconnected Cluster using Agent Based Installation method: 
 
-This lab guide uses a bare metal server to demonstrate the deployment of a fully disconnected clsuter using Agent Based Installer (ABI) methodology. 
+This lab guide uses a bare metal server to demonstrate the deployment of a fully disconnected cluster using Agent Based Installer (ABI) methodology. 
 The lab involves the following steps. 
 1. Parepare the host environemnt. This installs the applications needed, and disk partitions for performing the main lab tasks. 
 2. Create the networking environment for the environment
@@ -30,7 +30,13 @@ systemctl enable --now cockpit.socket
 # set python stuff (path needed in RHEL8)
 ln -s /bin/pip3 /bin/pip
 ln -s /bin/python3.9 /bin/python
+```
 
+The subsequent commands create the partitions using the nvme disks, and allocate those to be used for storing VM images and VM/Pod data volumes. Both these items are storage-heavy in general and can benefit from the extra space. (For example, the podman data volums will be used later to store all the mirrored images)
+
+The command below assume that the additional nvme disks have the names `nvme0n1p1` and `nvme1n1p1`. However, you should use `lsblk` command to confirm in case you metal server has a different set of disk names. If needed, alter the commands to suit your environment. 
+
+```
 parted -s -a optimal /dev/nvme0n1 mklabel gpt mkpart primary 0 3841GB
 sleep 20
 udevadm settle
@@ -51,6 +57,9 @@ mount -av
 restorecon -rF /var/lib/containers/storage/
 restorecon -rF /var/lib/libvirt/
 sleep 20
+```
+Subsequent set of commands enable ssh keys, enable virtualization on the host: 
+```
 ########### set up SSH:
 ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
 sleep 10
@@ -66,6 +75,10 @@ sleep 10
 # verify: systemctl status libvirtd. Output should show that its active. 
 systemctl is-active libvirtd # should show active
 sleep 10
+```
+At this point, we will install the KCLI tool. Though not really necessary (we can always use virsh commands to manage the VMs), KCLI provides a better and simpler set of options to create/manage VMs and vSwitch, so the lab will make use of it: 
+
+```
 #
 ###################
 # Step#3: Install KCLI Tool to manage virtual environment
@@ -73,13 +86,26 @@ sleep 10
 dnf -y copr enable karmab/kcli
 dnf -y install kcli bash-completion vim jq tar git ipcalc python3-pip
 #
+```
+Finally, some other basic tools that would be useful for various purposes and steps in the lab: 
+
+```
 ###################
 # Step#4: Install other tools:
 ###################
 dnf -y install podman httpd-tools runc wget nmstate containernetworking-plugins bind-utils bash-completion tree
 #
+```
+```
 ###################
-# Step#5: Disable Firewall:
+# Step#5: Restart libvirt:
+###################
+systemctl restart libvirtd
+```
+<!--
+```
+###################
+# Step#X: Disable Firewall:
 ###################
 systemctl disable firewalld iptables
 systemctl stop firewalld iptables
@@ -87,6 +113,7 @@ iptables -F
 sleep 30
 systemctl restart libvirtd
 ```
+-->
 
 ### Installing Ksushy for Redfish API usage: 
 
@@ -179,7 +206,7 @@ oc completion bash > oc.bash_completion
 mv oc.bash_completion /etc/bash_completion.d/
 ```
 
-## Create and configure needed VMs: 
+## Create and configure  VMs: 
 
 ### Configure and Bringup Bastion VM:
 
@@ -198,7 +225,7 @@ bastion:
  - size: 400
  files:
  - path: /etc/motd
-   content: Welcome to the cruel world
+   content: Welcome To The TNC lab Bastion Server
  nets:
  - name: tnc
    nic: eth0
@@ -234,8 +261,14 @@ kcli list vm
 | bastion |   up   | 192.168.125.10 | centos9stream | romantic-goiko |  kvirt  |
 +---------+--------+----------------+---------------+----------------+---------+
 ```
+At this point, the setup looks like the folloiwng. The main grey box here represents your host (baremetal) server, while the other components shown are the entities (Bastion VM, vSwitch, and DNS service) that you have configured to run on this host:
+
+![image](images/abi_install_setup_1.png)
 
 ### Configure Password-less SSH for Bastion access:
+Use the following command to copy the keys to bastion server (saves us extra work later to type password in subsequent steps)
+Note: the password for this Bastion VM is: `redhat`
+
 ```
 ssh-copy-id -f root@192.168.126.10
 ```
@@ -267,6 +300,13 @@ EOF
 kcli create plan -f hub.yaml
 ```
 
+Note that the hub VM has been left in a created state, and wasn't booted up. We will have the installer take care of booting it up later on. 
+
+The lab environment now looks like the following: 
+
+![image](images/abi_install_setup_2.png)
+
+
 ## Creating the Mirror registry:
 
 The mirror registry can be any Any Docker v2.2 compliant registry. Some examples include Red Hat Quay, JFrog Artifactory, Harbor etc. More information can be found [here](https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-installation-images.html#installation-about-mirror-registry_installing-mirroring-installation-images). 
@@ -280,6 +320,7 @@ We will use the Red Hat Quay as mirror registry. The installation of this involv
 * About 12GB for the OCP 14 images. If including all operators, this may require upto 358GB. This is taken care by allocating a large disk partition to `/var/lib/containers/storage/` in the initial configurations we did. 
 
 More details about the requirements and other steps can be found [here](https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html)
+
 
 ### Pull Secret:
 
@@ -342,6 +383,9 @@ podman login https://quay.tnc.bootcamp.lab:8443 --tls-verify=false --authfile .d
 
 This will result in: 
 > Login Succeeded!
+
+The update lab visualization is represented by the following figure: 
+![image](images/abi_install_setup_3.png)
 
 ## Install Git:
 ```
@@ -501,6 +545,9 @@ Now the stage is set to start the mirroring process. Use the following command t
 ```
 oc mirror --config=./imageset-config.yaml docker://quay.tnc.bootcamp.lab:8443 --dest-skip-tls=true --source-skip-tls=true
 ```
+
+The following figure shows what takes place in this step: 
+![image](images/abi_install_setup_5.png)
 
 The output will look like the following: 
 ```
@@ -682,6 +729,9 @@ hosts:
             next-hop-interface: eth0
 EOF
 ```
+
+The previous steps are visually represnted here: 
+![image](images/abi_install_setup_6.png)
 
 ### Adding extra manifests: 
 Extra manifests and machine configs can be bundled into the agent installer ISO image but placing those under the `./openshift` directory relative to the path where the `agent-config.yaml` and `install-config.yaml` are palced. 
@@ -877,6 +927,8 @@ curl -d '{"Image":"http:/192.168.125.10/agent.x86_64.iso","Inserted": true}' -H 
 ```
 
 This command calls the sushy api (installed during host buildup, and listening on port 9000). 
+
+![image](images/abi_install_setup_6.png)
 
 To verify that the mounting was successful, exit the VM, and verify by running the following command on the host machine: 
 
