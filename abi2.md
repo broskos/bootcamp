@@ -297,7 +297,10 @@ hub:
    mask: 255.255.255.0
    gateway: 192.168.125.1
 EOF
-kcli create plan -f hub.yaml
+```
+Now create the hub yaml (it will be created, but not start - which is what we require here)
+```
+kcli create plan -f ~/hub.yaml
 ```
 
 Note that the hub VM has been left in a created state, and wasn't booted up. We will have the installer take care of booting it up later on. 
@@ -408,7 +411,7 @@ This Git is preconfigured with username `syed` and password `hassan` . It also h
 
 Add the GIT sever to your DNS:
 ```
-echo "address=/git.tnc.bootcamp.lab/192.168.125.1" > /etc/NetworkManager/dnsmasq.d/hub.conf 
+echo "address=/git.tnc.bootcamp.lab/192.168.125.1" >> /etc/NetworkManager/dnsmasq.d/hub.conf 
 systemctl restart NetworkManager
 ```
 
