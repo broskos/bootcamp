@@ -143,11 +143,12 @@ metadata:
 spec:
   clusterGroupName: hub
   gitOpsSpec:
+    manualSync: true
     operatorChannel: latest
-    operatorSource: redhat-operators
+    operatorSource: cs-redhat-operator-index
   gitSpec:
     targetRepo: http://git.tnc.bootcamp.lab:3000/syed/vpattern.git
-    targetRevision: master
+    targetRevision: main
     tokenSecret: private-git-repo-creds
     tokenSecretNamespace: mgmt-gitops-hub
 EOF
