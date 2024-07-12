@@ -408,7 +408,7 @@ podman exec -it gitea /bin/sh -c "gitea admin user create --admin --username sye
 ```
 -->
 
-This Git is preconfigured with username `syed` and password `hassan` . It also has a customized copy of validated pattern GIT repository that is publicly available at: https://github.com/Ladanow/ebc-multicloud-gitops/) 
+This Git is preconfigured with username `syed` and password `hassan` . It also has a customized copy of validated pattern GIT repository that is publicly available at: https://gitlab.consulting.redhat.com/global-tme-practice/tnc/management/mgmt1/vpattern) 
 
 Add the GIT sever to your DNS:
 ```
