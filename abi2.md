@@ -530,6 +530,8 @@ mirror:
     - name: openshift-gitops-operator
       channels:
       - name: latest
+      - name: gitops-1.12
+      - name: gitops-1.13
   additionalImages:
   - name: registry.redhat.io/ubi8/ubi:latest
   - name: registry.redhat.io/openshift4/ose-tools-rhel8:latest
