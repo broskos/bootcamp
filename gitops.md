@@ -80,7 +80,6 @@ Access ArgoCD GUI using the information above. The GUI should look like the foll
 
 Run the following commands:
 ```
-# sudo -i
 mkdir ~/gitops
 cd ~/gitops
 ```
