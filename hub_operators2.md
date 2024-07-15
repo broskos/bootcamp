@@ -1,58 +1,4 @@
 
-## Complete validated patterns subscription:
-
-Validated Pattern operator subscription was already included in the installation iso file
-However, the pattern will not install yet since it doesn't support disconneced environment.  To work around that, we can tempoararily enable proxy configuration on our cluster. 
-
-Prior to do that, lets install proxy server on the host. Exit from bastion (sing "CTRL+]") console, and use the following command at the `[root@hypervisor ~]#` prompt:
-
-```
-dnf install -y squid
-systemctl start squid
-systemctl enable squid
-```
-While on the host system, note down the IP address it uses, using `ip addr show | grep "bond0$"` . For example: 
-```
-ip addr show | grep "bond0$"
-    inet 147.28.185.223/31 scope global noprefixroute bond0
-```
-
-Reconnect to basion using : `virsh console bastion`
-
-Now configure proxy on the cluster using: 
-```
-oc edit proxy cluster
-```
-Add the following lines in the .spec section: 
-
-```
-status:
-  httpProxy: http://147.28.185.223:3128
-  httpsProxy: http://147.28.185.223:3128
-  noProxy: .cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.125.0/24,api-int.hub.tnc.bootcamp.lab,fd02::/48,localhost,tnc.bootcamp.lab
-```
-
-Verify if the patterns operator is properly installed, using `oc get csv` , for example: 
-
-```
-oc get csv
-NAME                        DISPLAY                       VERSION   REPLACES                    PHASE
-patterns-operator.v0.0.52   Validated Patterns Operator   0.0.52    patterns-operator.v0.0.51   Succeeded
-```
-
-Note, if the CSV phase shows as "Failed" , then you can remove and readd it by using: 
-```
-oc delete -f ~/vpattern.yaml
-oc delete csv -n openshift-operators patterns-operator.v0.0.52
-sleep 10
-oc apply -f ~/vpattern.yaml
-```
-
-The CSV should get recreated and reach "Succeed" state
-
-The proxy configurion from the cluster can now be removed using `oc edit proxy cluster` and removing the three lines added earlier in this section. 
-
-
 ## Disable default catalog sources: 
 
 ```
@@ -70,6 +16,9 @@ EOF
 
 ```
 for cs_filename in ~/oc-mirror-workspace/result*/catalog*.yaml; do oc apply -f $cs_filename; done
+cp ~/oc-mirror-workspace/result*/*redhat*.yaml ~/new.yaml
+sed -i s/cs-redhat-operator-index/redhat-operators/g new.yaml
+oc apply -f ~/new.yaml
 ```
 
 Check that the new catalog source is available using: 
@@ -91,6 +40,68 @@ advanced-cluster-management                  89s
 openshift-gitops-operator                    89s
 patterns-operator                            89s
 ```
+
+## Complete validated patterns subscription:
+
+Validated Pattern operator subscription was already included in the installation iso file
+However, the pattern will not install yet since it doesn't support disconneced environment.  To work around that, we can tempoararily enable proxy configuration on our cluster. 
+
+Prior to do that, lets install proxy server on the host. Exit from bastion (sing "CTRL+]") console, and use the following command at the `[root@hypervisor ~]#` prompt:
+
+```
+dnf install -y squid
+systemctl start squid
+systemctl enable squid
+```
+While on the host system, note down the IP address it uses, using `ip addr show | grep "bond0$"` . For example: 
+```
+ip addr show | grep "bond0$"
+    inet 147.28.185.223/31 scope global noprefixroute bond0
+```
+
+Reconnect to basion using : `virsh console bastion`
+
+Now configure proxy on the cluster to use this proxy. Ffor that, first create a yaml file called `proxy.yaml` using the folliowing sample: 
+```
+apiVersion: config.openshift.io/v1
+kind: Proxy
+metadata:
+  name: cluster
+spec:
+  httpProxy: http://147.28.185.223:3128
+  httpsProxy: http://147.28.185.223:3128
+  noProxy: .cluster.local,.svc,10.128.0.0/14,127.0.0.1,172.30.0.0/16,192.168.125.0/24,api-int.hub.tnc.bootcamp.lab,fd02::/48,localhost,tnc.bootcamp.lab
+```
+here, the IP address for `httpProxy` and `httpsProxy` should be one you had extracted for your own cluster. 
+
+Then apply the file using:
+```
+oc apply -f proxy.yaml
+```
+
+Verify if the patterns operator is properly installed, using `oc get csv` , for example: 
+
+```
+oc get csv
+NAME                        DISPLAY                       VERSION   REPLACES                    PHASE
+patterns-operator.v0.0.52   Validated Patterns Operator   0.0.52    patterns-operator.v0.0.51   Succeeded
+```
+
+Note, if the CSV phase shows as "Failed" , then you can remove and readd it by using: 
+```
+oc delete -f ~/vpattern.yaml
+oc delete csv -n openshift-operators patterns-operator.v0.0.52
+oc delete operators patterns-operator.openshift-operators``
+sleep 10
+oc apply -f ~/vpattern.yaml
+```
+
+The CSV should get recreated and reach "Succeed" state
+
+The proxy configurion from the cluster can now be removed using `oc edit proxy cluster` and removing the three lines added earlier in this section. 
+
+
+
 
 ## Using the validated patterns operator: 
 
