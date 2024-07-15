@@ -23,6 +23,7 @@ By default, the operator installs in the `openshift-gitops` namespace,and uses t
 **NOTE** in a production environment, you may need to be more restrictive about the role that you bind to this service account and the namespaces you give it access to. 
 
 ```
+cat << EOF | oc apply -f - 
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -35,6 +36,7 @@ subjects:
   - kind: ServiceAccount
     name: openshift-gitops-argocd-application-controller
     namespace: openshift-gitops
+EOF
 ```
 
 ```
