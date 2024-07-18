@@ -41,10 +41,9 @@ openshift-gitops-operator                    89s
 patterns-operator                            89s
 ```
 
-## Complete validated patterns subscription:
+## Complete validated patterns subscription & Reconecting the cluster via Proxy:
 
-Validated Pattern operator subscription was already included in the installation iso file
-However, the pattern will not install yet since it doesn't support disconneced environment.  To work around that, we can tempoararily enable proxy configuration on our cluster. 
+Validated Pattern operator subscription was already included in the installation iso file. However, the pattern will not install yet since it doesn't support disconneced environment.  To work around that, we can enable proxy configuration on our cluster. 
 
 Prior to do that, lets install proxy server on the host. Exit from bastion (sing "CTRL+]") console, and use the following command at the `[root@hypervisor ~]#` prompt:
 
@@ -79,6 +78,13 @@ Then apply the file using:
 oc apply -f proxy.yaml
 ```
 
+Finally, update your pull secret of the cluster so it now has your credential to download images from redhat: 
+```
+AUTHSTRING="{\"quay.tnc.bootcamp.lab:8443\": {\"auth\": \"cXVheTpzeWVkQHJlZGhhdA==\",\"email\": \"quay@redhat.com\"}}"
+jq -c ".auths += $AUTHSTRING" < /root/.docker/config.json > /tmp/pull-secret.json
+oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/tmp/pull-secret.json
+```
+
 Verify if the patterns operator is properly installed, using `oc get csv` , for example: 
 
 ```
@@ -99,8 +105,6 @@ oc apply -f ~/vpattern.yaml
 The CSV should get recreated and reach "Succeed" state
 
 The proxy configurion from the cluster can now be removed using `oc edit proxy cluster` and removing the three lines added earlier in this section. 
-
-
 
 
 ## Using the validated patterns operator: 
@@ -165,6 +169,20 @@ spec:
 EOF
 ```
 
+At this point, you will find that the validated patterns operator will install GitOps operatror and also create an ArgoCD app. This can be verified using `oc get csv`: 
+```
+oc get csv 
+NAME                                DISPLAY                       VERSION   REPLACES                            PHASE
+openshift-gitops-operator.v1.12.4   Red Hat OpenShift GitOps      1.12.4    openshift-gitops-operator.v1.12.3   Succeeded
+patterns-operator.v0.0.52           Validated Patterns Operator   0.0.52    patterns-operator.v0.0.51           Succeeded
+```
+
+The application created shows with the comment `oc get applicatons -n -n openshift-gitops` 
+```
+oc get applications -n openshift-gitops
+NAME              SYNC STATUS   HEALTH STATUS
+mgmt-gitops-hub   Synced        Healthy
+```
 
 <!--
 
