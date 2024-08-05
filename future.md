@@ -1,0 +1,1 @@
+privatekey: ~/.ssh/id_rsa.pub
