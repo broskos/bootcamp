@@ -18,7 +18,7 @@ ABI2 | Installing Operators in a disconnected Hub cluster |  https://gitlab.cons
 
 ## Labs for ZTP Concepts:
 
-These lab requires either a lightweight RHEL server (could be a VM) or a SNO (for the 2nd lab). Recommended to use [this]https://demo.redhat.com/catalog/babylon-catalog-prod/order/openshift-cnv.ocpmulti-single-node-cnv.prod) environment with OCP 4.14. 
+This lab will done in cluster which we deployed in first lab ABI1 and ABI2.
 
 
 | Lab ID | Description | URL |

@@ -12,7 +12,45 @@ The lab involves the following steps.
 - Genering an ISO file and booting the OpenShift Node(s) with the ISO
 
 ## Prepare the host server: 
-The lab uses m3.large.x86 metal server from Equinix. This can be requested through [RHDP](https://demo.redhat.com/catalog?search=equinix+metal+baremetal+blank)
+The lab uses RHEL 9.5 ISO. It is placed in HTTP server in Nokia Lab environment: http://10.93.11.250/osiso/rhel/rhel9r5x8564dvd.iso
+
+Boot the server in iDRAC console like this:
+
+![image](images/prepare_server_boot_rhel_iso.png)
+
+After ISO is booted and configure RHEL installation (IMPORTANT: choose all disk as "DEVICE SELECTION" and "STORAGE CONFIGURATION" is Custom ):
+
+![image](images/prepare_server_disk_choice_ss.png)
+
+![image](images/prepare_server_disk_partition_ss.png)
+
+![image](images/prepare_server_root_password_ss.png)
+
+![image](images/prepare_server_user_create_ss.png)
+
+After RHEL is installed successfuly, it is required to setup network on server from iDRAC console in order to assing external IP to server:
+
+```
+###################
+# Step#0: Configure Network on Server from iDRAC Console for external IP Address:
+###################
+nmcli connection add type vlan con-name vlan94 dev ens21f0np0 id 94
+nmcli connection modify vlan94 ipv4.addresses 100.81.183.228/27 ipv4.gateway 100.81.183.225 ipv4.method manual
+nmcli connection up vlan94
+nmcli connection show
+```
+
+![image](images/prepare_server_network_config.png)
+
+Nokia Lab is using proxy to connect Internet so set proxy before start configuring the node:
+```
+###################
+# Set Proxy
+###################
+export https_proxy=http://87.254.212.120:8080
+export NO_PROXY="quay.tnc.bootcamp.lab,git.tnc.bootcamp.lab,api.hub.tnc.bootcamp.lab,api-int.hub.tnc.bootcamp.lab,.apps.hub.tnc.bootcamp.lab"
+```
+
 Use the following to set up the server: 
 
 ```
@@ -20,6 +58,7 @@ Use the following to set up the server:
 # Step#1: Basic Config, Add-ons and Disk Partitiions:
 ###################
 sudo -i
+subscription-manager register
 dnf update -y
 # install python and cockpit (for VM console later)
 dnf -y install python3.9 cockpit cockpit-machines
@@ -28,23 +67,9 @@ systemctl enable --now cockpit.socket
 ln -s /bin/pip3 /bin/pip
 ln -s /bin/python3.9 /bin/python
 
-parted -s -a optimal /dev/nvme0n1 mklabel gpt mkpart primary 0 3841GB
-sleep 20
-udevadm settle
-parted -s -a optimal /dev/nvme1n1 mklabel gpt mkpart primary 0 3841GB 
-sleep 20
-udevadm settle
-mkfs.xfs /dev/nvme0n1p1
-mkfs.xfs /dev/nvme1n1p1
-X=`lsblk  /dev/nvme0n1p1 -no UUID`
-echo "UUID=$X       /var/lib/containers/storage/   xfs     auto 0       0" >> /etc/fstab
-sleep 20
-Y=`lsblk  /dev/nvme1n1p1 -no UUID`
-echo "UUID=$Y       /var/lib/libvirt   xfs     auto 0       0" >> /etc/fstab
 mkdir -p /var/lib/containers/storage/
 mkdir -p /var/lib/libvirt/
 systemctl daemon-reload
-mount -av
 restorecon -rF /var/lib/containers/storage/
 restorecon -rF /var/lib/libvirt/
 sleep 20
@@ -150,12 +175,14 @@ address=/api.hub.tnc.bootcamp.lab/192.168.125.100
 address=/api-int.hub.tnc.bootcamp.lab/192.168.125.100
 address=/.apps.hub.tnc.bootcamp.lab/192.168.125.100
 address=/quay.tnc.bootcamp.lab/192.168.125.1
+address=/git.tnc.bootcamp.lab/192.168.126.1
 EOF
 
 systemctl reload NetworkManager.service
 systemctl restart NetworkManager.service
 # Check if service is active: 
 systemctl is-active NetworkManager
+systemctl reload NetworkManager.service
 ```
 
 Note that the DNS records for the "hub" SNO cluster have been created as well. 
@@ -191,6 +218,8 @@ bastion:
  image: centos9stream
  numcpus: 6
  memory: 16000
+ disks:
+ - size: 100
  files:
  - path: /etc/motd
    content: Welcome to the cruel world
@@ -306,6 +335,11 @@ Run the installer:
 ###################
 # Step#11_b: Installing Mirror Registry
 ###################
+podman pull registry.access.redhat.com/ubi8/pause:8.7-6
+podman pull registry.redhat.io/rhel8/postgresql-10:1-203.1669834630
+podman pull registry.redhat.io/quay/quay-rhel8:v3.8.14
+podman pull registry.redhat.io/rhel8/redis-6:1-92.1669834635
+
 ~/mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
 ```
 
@@ -370,6 +404,9 @@ Now lets install the tools:
 ###################
 # Step#12_b: Installing OpenShift Client, Installer  and Mirror Plugin
 ###################
+export https_proxy=http://87.254.212.120:8080
+export NO_PROXY="quay.tnc.bootcamp.lab,git.tnc.bootcamp.lab,api.hub.tnc.bootcamp.lab,api-int.hub.tnc.bootcamp.lab,.apps.hub.tnc.bootcamp.lab"
+
 curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-client-linux-4.14.18.tar.gz -o openshift-client-linux-4.14.18.tar.gz
 tar -xvf openshift-client-linux-4.14.18.tar.gz
 mv oc /usr/bin/
@@ -419,15 +456,18 @@ mirror:
     packages:
     - name: multicluster-engine
       channels:
-      - name: stable-2.5
-      - name: stable-2.4
+      - name: stable-2.6
+      #- name: stable-2.5
+      #- name: stable-2.4
     - name: cluster-logging
       channels:
-      - name: stable-5.9
+      #- name: stable-5.9
+      - name: stable-6.0
     - name: advanced-cluster-management
       channels:
-      - name: release-2.10
-      - name: release-2.9
+      #- name: release-2.10
+      - name: release-2.11
+      #- name: release-2.9
     - name: local-storage-operator
       channels:
       - name: stable
@@ -436,7 +476,8 @@ mirror:
       - name: stable
     - name: quay-operator
       channels:
-      - name: stable-3.11
+      #- name: stable-3.11
+      - name: stable-3.13
     - name: openshift-gitops-operator
       channels:
       - name: latest
@@ -482,10 +523,14 @@ Writing ICSP manifests to oc-mirror-workspace/results-1712941216
 
 ```
 
-**NOTE** Takes almost ~15 mins (not 7). If it fails, re-run
+**NOTE** Takes almost ~15 mins (not 7). If it fails, re-run the command couple of times until it is completed successfuly
 
 In case the script ends with something like:
+> error: unable to push registry.redhat.io/openshift4/topology-aware-lifecycle-manager-recovery-rhel8: failed to retrieve blob sha256:3a84e4bfcf230a5f8d7020bc912a917e72d298791811fbe42671176fc21e416d: unauthorized: Access to the requested resource is not authorized
+> error: unable to open source layer sha256:b2493dd3a326ea2a469c9c338e059fa624b962066ff75c2e01f5a1743f20ff9f to copy to quay.tnc.bootcamp.lab:8443/openshift4/topology-aware-lifecycle-manager-recovery-rhel8: unauthorized: Access to the requested resource is not authorized
+
 > error: one or more errors occurred while uploading images
+
 
 Then just rerun the command one more time. This tends to happen in the virtual environment with virtual linux bridges. Re-run will download the items that couldn't be downloaded in previous attempt. 
 

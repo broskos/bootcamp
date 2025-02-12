@@ -7,7 +7,7 @@ Goal: to understand use of Kustomization with OpenShift
 ``` 
 mkdir ~/kustomization
 cd ~/kustomization
-oc create deployment mydeployment --image=quay.io/sfhassan/newtools --replicas=2 -o yaml --dry-run=client > deployment.yaml
+oc create deployment mydeployment --image=quay.tnc.bootcamp.lab:8443/sfhassan/oc_net_tools --replicas=2 -o yaml --dry-run=client > deployment.yaml
 ```
 ## Create Kustomization File:
 ```

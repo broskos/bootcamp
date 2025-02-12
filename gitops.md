@@ -2,6 +2,67 @@
 
 Purpose: Understand and Use OpenShift GitOps Operator (ArgoCD)
 
+## Install and Configure Local GIT Server: 
+Install and Configure Local GIT Server. You will now install local GIT server and create student user on it. student user will have "student" as password:
+```
+export https_proxy=http://87.254.212.120:8080
+export NO_PROXY="quay.tnc.bootcamp.lab,git.tnc.bootcamp.lab,api.hub.tnc.bootcamp.lab,api-int.hub.tnc.bootcamp.lab,.apps.hub.tnc.bootcamp.lab"
+
+mkdir -p /opt/gitea/
+chown -R 1000:1000 /opt/gitea/
+cat << EOF > /etc/systemd/system/podman-gitea.service
+[Unit]
+Description=Podman container - Gitea Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root
+TimeoutStartSec=300
+ExecStartPre=-/usr/bin/podman rm -f gitea
+ExecStart=podman run --name gitea --hostname git.tnc.bootcamp.lab -e USER_UID=1000 -e USER_GID=1000 -e GITEA__server__ROOT_URL=http://git.tnc.bootcamp.lab:3000 -e GITEA__server__SSH_PORT=2222 -e GITEA__server__SSH_LISTEN_PORT=22 -e GITEA__service__DISABLE_REGISTRATION=true -e GITEA__security__SECRET_KEY=97Vy1tGr1Ds5X9GVgbEdYuVx7CkGdoWam6fIRVgeKptAcLVB4Dg3DSVdmXAKz7et -e GITEA__security__INTERNAL_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE2NjkzODk4MjB9.h-Pr9FEOUZTYEuZeH1oajUMw7dtwNopiiSfwtNB36vk -e GITEA__security__INSTALL_LOCK=true -p 3000:3000 -p 2222:22 -v /opt/gitea/:/data:Z -v /etc/localtime:/etc/localtime:ro quay.io/mavazque/gitea:1.17.3
+ExecStop=-/usr/bin/podman rm -f gitea
+Restart=always
+RestartSec=30s
+StartLimitInterval=60s
+StartLimitBurst=99
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+podman pull quay.io/skoksal/gitea:1.17.3
+systemctl daemon-reload
+systemctl enable podman-gitea --now
+podman ps
+podman exec --user 1000 gitea /bin/sh -c 'gitea admin user create --username student --password student --email student@5g-deployment.lab --must-change-password=false --admin'
+```
+
+After local GIT server is successfuly installed, you can login it from http://git.tnc.bootcamp.lab:3000
+
+![image](images/gitops_login_local_git.png)
+
+## Sync Online Repo to Local: 
+Create a new Repo on local GIT:
+
+![image](images/gitops_new_repo.png)
+
+![image](images/gitops_create_new_repo.png)
+
+
+
+```
+git clone https://github.com/sarpkoksal/ocp-gitops.git
+cd ocp-gitops/
+git remote set-url origin http://git.tnc.bootcamp.lab:3000/student/ocp-gitops.git
+git push -u origin main
+```
+## Push Container Image to local Registry: 
+```
+yum install skopeo
+skopeo copy docker://quay.io/sfhassan/oc_net_tools  docker://quay.tnc.bootcamp.lab:8443/sfhassan/oc_net_tools --authfile .docker/config.json --tls-verify=false
+```
+
 ## Install the GitOps Operator: 
 
 ```
@@ -106,7 +167,7 @@ spec:
     directory:
       recurse: true
     path: manifests/set1
-    repoURL: https://github.com/git-shassan/ocp-gitops.git
+    repoURL: http://git.tnc.bootcamp.lab:3000/student/ocp-gitops.git
     targetRevision: main
   syncPolicy:
     automated:
@@ -189,7 +250,7 @@ spec:
     directory:
       recurse: true
     path: manifests/set2
-    repoURL: https://github.com/git-shassan/ocp-gitops.git
+    repoURL: http://git.tnc.bootcamp.lab:3000/student/ocp-gitops.git
     targetRevision: main
   syncPolicy:
     automated:
