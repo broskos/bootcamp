@@ -7,9 +7,8 @@ The lab material contained here is part of NPSS bootcamp. Slideware for the boot
 
 ## Labs for Hub Cluster Installation: 
 
-These lab uses m3.large.x86 metal server from Equinix. This can be requested through [RHDP](https://demo.redhat.com/catalog?search=equinix+metal+baremetal+blank)
+The lab uses RHEL 9.5 ISO. It can be downloaded from [here](https://developers.redhat.com/content-gateway/file/rhel/Red_Hat_Enterprise_Linux_9.5/rhel-9.5-x86_64-dvd.iso)
 
-[!NOTE] The lab environment takes around 8-10 minutes to be ready and available.
 
 | Lab ID | Description | URL |
 |--------|-------------|------|
