@@ -118,7 +118,7 @@ The basic tools are installed at this point. Next we will install the Ksushy too
 ###################
 # Step#6: Enable KShushy, to use Redfish API for VM management:
 ###################
-pip3 install cherrypy 
+pip install cherrypy 
 pip install -U pip setuptools 
 pip install pyopenssl
 kcli create sushy-service --ssl --port 9000 
