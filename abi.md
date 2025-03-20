@@ -63,9 +63,9 @@ dnf update -y
 # install python and cockpit (for VM console later)
 dnf -y install python3.9 cockpit cockpit-machines
 systemctl enable --now cockpit.socket
-# set python stuff (path needed in RHEL8)
-ln -s /bin/pip3 /bin/pip
-ln -s /bin/python3.9 /bin/python
+# set python stuff (path needed in RHEL8, skip as we are RHEL9)
+#ln -s /bin/pip3 /bin/pip
+#ln -s /bin/python3.9 /bin/python
 
 mkdir -p /var/lib/containers/storage/
 mkdir -p /var/lib/libvirt/
