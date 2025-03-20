@@ -325,7 +325,7 @@ echo $PULL_SECRET > ~/.docker/config.json
 First, download the installer using the following: 
 
 ```
-wget https://github.com/quay/mirror-registry/releases/download/v1.3.10/mirror-registry-online.tar.gz
+wget https://github.com/quay/mirror-registry/releases/download/v2.0.3/mirror-registry-online.tar.gz
 tar -xvf mirror-registry-online.tar.gz
 chmod u+x mirror-registry
 ```
@@ -335,11 +335,10 @@ Run the installer:
 ###################
 # Step#11_b: Installing Mirror Registry
 ###################
-podman pull registry.access.redhat.com/ubi8/pause:8.7-6
+podman pull registry.access.redhat.com/ubi8/pause:8.10-5
 podman pull registry.redhat.io/rhel8/postgresql-10:1-203.1669834630
-podman pull registry.redhat.io/quay/quay-rhel8:v3.8.14
-podman pull registry.redhat.io/rhel8/redis-6:1-92.1669834635
-
+podman pull registry.redhat.io/quay/quay-rhel8:v3.12.3
+podman pull registry.redhat.io/rhel8/redis-6:1-190
 ~/mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
 ```
 
