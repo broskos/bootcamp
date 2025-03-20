@@ -103,8 +103,8 @@ dnf -y install podman httpd-tools runc wget nmstate containernetworking-plugins 
 ###################
 # Step#5: Disable Firewall:
 ###################
-systemctl disable firewalld iptables
-systemctl stop firewalld iptables
+systemctl disable firewalld
+systemctl stop firewalld
 iptables -F
 sleep 30
 systemctl restart libvirtd
