@@ -404,6 +404,8 @@ Now lets install the tools:
 export https_proxy=http://87.254.212.120:8080
 export NO_PROXY="quay.tnc.bootcamp.lab,git.tnc.bootcamp.lab,api.hub.tnc.bootcamp.lab,api-int.hub.tnc.bootcamp.lab,.apps.hub.tnc.bootcamp.lab"
 
+dnf install -y podman bind-utils nmstate httpd
+
 curl https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.14.18/openshift-client-linux-4.14.18.tar.gz -o openshift-client-linux-4.14.18.tar.gz
 tar -xvf openshift-client-linux-4.14.18.tar.gz
 mv oc /usr/bin/
