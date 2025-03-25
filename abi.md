@@ -261,7 +261,7 @@ kcli list vm
 
 ### Configure Password-less SSH for Bastion access:
 ```
-ssh-copy-id root@192.168.126.10 -f
+ssh-copy-id -f root@192.168.126.10
 ```
 Also make the `id_rsa` file to tbe the primary key used: 
 ```
@@ -336,7 +336,6 @@ Run the installer:
 # Step#11_b: Installing Mirror Registry
 ###################
 podman pull registry.access.redhat.com/ubi8/pause:8.10-5
-podman pull registry.redhat.io/rhel8/postgresql-10:1-203.1669834630
 podman pull registry.redhat.io/quay/quay-rhel8:v3.12.3
 podman pull registry.redhat.io/rhel8/redis-6:1-190
 ~/mirror-registry install --quayHostname quay.tnc.bootcamp.lab --quayRoot /opt/ --initUser quay --initPassword syed@redhat
@@ -354,7 +353,6 @@ To furhter verify if the installation is successful, check the pods it must have
 podman ps
 CONTAINER ID  IMAGE                                                    COMMAND         CREATED         STATUS         PORTS                   NAMES
 6da068577f02  registry.access.redhat.com/ubi8/pause:8.7-6              infinity        12 minutes ago  Up 12 minutes  0.0.0.0:8443->8443/tcp  2ee3e8b0d965-infra
-321acd27dc91  registry.redhat.io/rhel8/postgresql-10:1-203.1669834630  run-postgresql  12 minutes ago  Up 12 minutes  0.0.0.0:8443->8443/tcp  quay-postgres
 6494e91da547  registry.redhat.io/rhel8/redis-6:1-92.1669834635         run-redis       11 minutes ago  Up 11 minutes  0.0.0.0:8443->8443/tcp  quay-redis
 2ab76abfdb27  registry.redhat.io/quay/quay-rhel8:v3.8.14               registry        11 minutes ago  Up 11 minutes  0.0.0.0:8443->8443/tcp  quay-app
 ```
