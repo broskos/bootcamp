@@ -8,6 +8,7 @@ metadata:
   name: cluster
 spec: 
   disableAllDefaultSources: true
+EOF
 ```
 
 ## add new catalog source: 
