@@ -30,10 +30,6 @@ This lab will done in cluster which we deployed in first lab ABI1 and ABI2.
 
 ## Labs for ZTP: 
 
-The following labs use a [this](https://demo.redhat.com/catalog/babylon-catalog-prod/order/equinix-metal.ocp4-ran.prod) RHDP Environment. 
-
-[!NOTE] The lab may take around 2 hours to spin up and ready to be used
-
 Once the environment is ready, use [these stesp](https://gitlab.consulting.redhat.com/shassan/bootcamp/-/blob/Nokia-Core/lab_prep.md) to prefer it for the labs. 
 
 | Lab ID | Description | URL |
