@@ -77,7 +77,7 @@ kind: ClusterImageSet
 metadata:
   name: active-ocp-version
 spec:
-  releaseImage: infra.5g-deployment.lab:8443/openshift/release-images:4.14.0-x86_64
+  releaseImage: infra.5g-deployment.lab:8443/openshift/release-images:4.17.3-x86_64
 EOF
 ```
 
