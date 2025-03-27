@@ -53,7 +53,7 @@ EOF
 ```
 ### Namespace for LVMO
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/StorageLVMOSubscriptionNS.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/source-crs/StorageLVMOSubscriptionNS.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -67,7 +67,7 @@ EOF
 ```
 ### Operator Group for LVMO
 ```
-cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/StorageLVMOSubscriptionOperGroup.yaml
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/source-crs/StorageLVMOSubscriptionOperGroup.yaml
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
