@@ -51,6 +51,21 @@ generators:
 - common-414.yaml
 EOF
 ```
+### Namespace for LVMO
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/StorageLVMOSubscriptionNS.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+  name: openshift-storage
+EOF
+```
+
 
 ### Namespace for policies & clusterimageset:
 
