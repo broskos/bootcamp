@@ -78,6 +78,21 @@ spec:
   - openshift-storage
 EOF
 ```
+### Subscription for LVMO
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/source-crs/StorageLVMOSubscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: lvms
+  namespace: openshift-storage
+spec:
+  installPlanApproval: Automatic
+  name: lvms-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
 
 ### Namespace for policies & clusterimageset:
 
