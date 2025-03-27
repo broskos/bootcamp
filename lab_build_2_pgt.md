@@ -65,7 +65,19 @@ metadata:
   name: openshift-storage
 EOF
 ```
-
+### Operator Group for LVMO
+```
+cat <<EOF > ~/5g-deployment-lab/ztp-repository/policies/configuration-version-2024-03-04/StorageLVMOSubscriptionOperGroup.yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-storage-operatorgroup
+  namespace: openshift-storage
+spec:
+  targetNamespaces:
+  - openshift-storage
+EOF
+```
 
 ### Namespace for policies & clusterimageset:
 
